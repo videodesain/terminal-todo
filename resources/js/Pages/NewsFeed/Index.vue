@@ -23,21 +23,62 @@
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Filter Section -->
         <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <div class="flex items-center space-x-4">
-            <button 
-              v-for="type in ['all', 'news', 'video', 'image']" 
-              :key="type"
-              @click="selectedType = type"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              :class="{
-                'bg-gradient-to-r from-blue-600 to-purple-600 text-white': selectedType === type,
-                'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600': selectedType !== type
-              }"
-            >
-              {{ type === 'all' ? 'Semua' : type === 'news' ? 'Berita' : type === 'video' ? 'Video' : 'Gambar' }}
-            </button>
+          <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-4">
+            <!-- Filter Tipe -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span class="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">Tipe:</span>
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  v-for="type in ['all', 'news', 'video', 'image']" 
+                  :key="type"
+                  @click="selectedType = type"
+                  class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap"
+                  :class="{
+                    'bg-gradient-to-r from-blue-600 to-purple-600 text-white': selectedType === type,
+                    'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600': selectedType !== type
+                  }"
+                >
+                  {{ type === 'all' ? 'Semua' : type === 'news' ? 'Berita' : type === 'video' ? 'Video' : 'Gambar' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter Tanggal -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span class="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">Periode:</span>
+              <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <select 
+                  v-model="selectedPeriod"
+                  class="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">Semua Waktu</option>
+                  <option value="today">Hari Ini</option>
+                  <option value="week">Minggu Ini</option>
+                  <option value="month">Bulan Ini</option>
+                  <option value="year">Tahun Ini</option>
+                  <option value="custom">Rentang Kustom</option>
+                </select>
+
+                <!-- Custom Date Range -->
+                <div v-if="selectedPeriod === 'custom'" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input 
+                      type="date" 
+                      v-model="startDate"
+                      class="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                    <span class="text-gray-500 whitespace-nowrap">sampai</span>
+                    <input 
+                      type="date" 
+                      v-model="endDate"
+                      class="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">
+          <div class="text-sm text-gray-500 dark:text-gray-400 mt-2 sm:mt-0">
             Total: {{ filteredFeeds.length }} feed
           </div>
         </div>
@@ -110,13 +151,47 @@ const props = defineProps({
 })
 
 const selectedType = ref('all')
+const selectedPeriod = ref('week')
+const startDate = ref('')
+const endDate = ref('')
 
-// Filter feeds berdasarkan tipe yang dipilih
+// Filter feeds berdasarkan tipe dan periode yang dipilih
 const filteredFeeds = computed(() => {
-  if (selectedType.value === 'all') {
-    return props.feeds.data
+  let filtered = props.feeds.data
+
+  // Filter berdasarkan tipe
+  if (selectedType.value !== 'all') {
+    filtered = filtered.filter(feed => feed.type === selectedType.value)
   }
-  return props.feeds.data.filter(feed => feed.type === selectedType.value)
+
+  // Filter berdasarkan periode
+  if (selectedPeriod.value !== 'all') {
+    const now = new Date()
+    filtered = filtered.filter(feed => {
+      const feedDate = new Date(feed.created_at)
+      
+      switch (selectedPeriod.value) {
+        case 'today':
+          return feedDate.toDateString() === now.toDateString()
+        case 'week':
+          const weekStart = new Date(now.setDate(now.getDate() - now.getDay()))
+          return feedDate >= weekStart
+        case 'month':
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          return feedDate >= monthStart
+        case 'year':
+          const yearStart = new Date(now.getFullYear(), 0, 1)
+          return feedDate >= yearStart
+        case 'custom':
+          if (!startDate.value || !endDate.value) return true
+          return feedDate >= new Date(startDate.value) && feedDate <= new Date(endDate.value)
+        default:
+          return true
+      }
+    })
+  }
+
+  return filtered
 })
 
 // Kelompokkan feeds berdasarkan bulan
