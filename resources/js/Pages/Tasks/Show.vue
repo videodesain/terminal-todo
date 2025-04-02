@@ -60,26 +60,44 @@
                     <div class="p-6">
                         <!-- Title & Description with Action Buttons -->
                         <div class="mb-6">
-                            <div class="flex items-center justify-between mb-2">
-                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ task.title }}</h1>
-                                <div class="flex items-center space-x-2">
-                                    <Link
-                                        v-if="hasPermission('edit-task') || hasPermission('manage-task') || task.created_by === auth.user?.id || isAssignee"
-                                        :href="route('tasks.edit', task.id)"
-                                        class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                                    >
-                                        <i class="fas fa-edit mr-2"></i> Edit
-                                    </Link>
-                                    <button
-                                        v-if="hasPermission('delete-task') || hasPermission('manage-task') || task.created_by === auth.user?.id"
-                                        @click="confirmDeleteTask"
-                                        class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                                    >
-                                        <i class="fas fa-trash mr-2"></i> Hapus
-                                    </button>
+                            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
+                                <!-- Title and Description Container -->
+                                <div class="flex-1">
+                                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ task.title }}</h1>
+                                    <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{ task.description || 'Tidak ada deskripsi' }}</p>
+                                </div>
+
+                                <!-- Action Buttons Container -->
+                                <div class="flex flex-wrap gap-2 lg:flex-shrink-0">
+                                    <!-- Baris Pertama Mobile & Tablet: Edit & Hapus -->
+                                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                                        <Link
+                                            v-if="hasPermission('edit-task') || hasPermission('manage-task') || task.created_by === auth.user?.id || isAssignee"
+                                            :href="route('tasks.edit', task.id)"
+                                            class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                        >
+                                            <i class="fas fa-edit mr-2"></i> Edit
+                                        </Link>
+                                        <button
+                                            v-if="hasPermission('delete-task') || hasPermission('manage-task') || task.created_by === auth.user?.id"
+                                            @click="confirmDeleteTask"
+                                            class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                        >
+                                            <i class="fas fa-trash mr-2"></i> Hapus
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Baris Kedua Mobile & Tablet: Arsipkan -->
+                                    <div class="w-full sm:w-auto">
+                                        <button
+                                            @click="archiveTask"
+                                            class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-700 hover:to-gray-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                        >
+                                            <i class="fas fa-archive mr-2"></i> Arsipkan
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{ task.description || 'Tidak ada deskripsi' }}</p>
                         </div>
                         
                         <!-- Info Cards Grid -->
@@ -655,6 +673,29 @@ const deleteTask = () => {
             // Redirect ke halaman index
             router.visit(route('tasks.index'));
         }
+    });
+};
+
+// Tambahkan computed property untuk debug tombol arsip
+const showArchiveButton = computed(() => {
+    console.log('Debug Archive Button:', {
+        hasEditPermission: hasPermission('edit-task'),
+        hasManagePermission: hasPermission('manage-task'),
+        taskStatus: props.task.status,
+        isArchived: !!props.task.archived_at
+    });
+    
+    return (hasPermission('edit-task') || hasPermission('manage-task')) && 
+           !props.task.archived_at && 
+           (props.task.status === 'completed' || props.task.status === 'cancelled');
+});
+
+// Update method archiveTask
+const archiveTask = () => {
+    router.post(route('tasks.archive', props.task.id), {}, {
+        onSuccess: () => {
+            router.visit(route('tasks.index'));
+        },
     });
 };
 

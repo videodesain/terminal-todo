@@ -11,6 +11,7 @@
                 <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                     Tasks Board
                 </h2>
+                <!-- Add Task Button -->
                 <Link
                     :href="route('tasks.create')"
                     class="inline-flex items-center px-3 py-2 md:px-4 md:py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
@@ -27,43 +28,89 @@
 
         <div class="py-12">
             <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
-                <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="col-span-2">
-                        <input
-                            v-model="search"
-                            type="text"
-                            placeholder="Cari task..."
-                            class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
-                        >
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <select
-                                v-model="priorityFilter"
+                <!-- Filter Section -->
+                <div class="mb-6 space-y-4">
+                    <!-- Row 1: Search, Category, Priority -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <!-- Search Input -->
+                        <div class="md:col-span-4">
+                            <input
+                                v-model="search"
+                                type="text"
+                                placeholder="Cari task..."
                                 class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
                             >
-                                <option value="">Semua Prioritas</option>
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
                         </div>
-                        <div>
-                            <select
-                                v-model="categoryFilter"
-                                class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
+
+                        <!-- Category & Priority Filter Container -->
+                        <div class="grid grid-cols-2 gap-4 md:col-span-8 md:grid md:grid-cols-2">
+                            <!-- Category Filter -->
+                            <div>
+                                <select
+                                    v-model="categoryFilter"
+                                    class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
+                                >
+                                    <option value="">Semua Kategori</option>
+                                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                                        {{ category.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Priority Filter -->
+                            <div>
+                                <select
+                                    v-model="priorityFilter"
+                                    class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
+                                >
+                                    <option value="">Semua Prioritas</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Date Range & Archive Button -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <!-- Date Range -->
+                        <div class="md:col-span-8">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <input
+                                        v-model="dateFilter.start"
+                                        type="date"
+                                        class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
+                                    >
+                                </div>
+                                <div>
+                                    <input
+                                        v-model="dateFilter.end"
+                                        type="date"
+                                        class="w-full px-4 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Archive Button -->
+                        <div class="md:col-span-4">
+                            <Link
+                                :href="route('tasks.archived')"
+                                class="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
                             >
-                                <option value="">Semua Kategori</option>
-                                <option v-for="category in categories" :key="category.id" :value="category.id">
-                                    {{ category.name }}
-                                </option>
-                            </select>
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                                Lihat Arsip
+                            </Link>
                         </div>
                     </div>
                 </div>
 
-                <!-- Kanban Board (VERSI BARU) -->
+                <!-- Kanban Board -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto">
                     <div 
                         v-for="status in statuses" 
@@ -105,13 +152,14 @@
                         <!-- Task List For This Status -->
                         <div class="min-h-[200px] space-y-3">
                             <div 
-                                v-for="task in tasksGroupedByStatus[status]" 
+                                v-for="task in paginatedTasksByStatus(status)" 
                                 :key="`task-${task.id}`"
                                 class="task-card bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700"
                                 :class="{
                                     'animate-highlight': props.highlight && task.id === parseInt(props.highlight),
                                     'opacity-60 border-blue-400': isDragging && draggingTask?.id === task.id,
-                                    'transform hover:-translate-y-1': !isDragging || draggingTask?.id !== task.id
+                                    'transform hover:-translate-y-1': !isDragging || draggingTask?.id !== task.id,
+                                    'opacity-75': task.archived_at
                                 }"
                                 draggable="true"
                                 @dragstart="handleDragStart($event, task)"
@@ -142,7 +190,7 @@
                                     </div>
                                     
                                     <!-- Action Buttons -->
-                                    <div class="flex items-center space-x-1">
+                                    <div class="flex items-center space-x-2">
                                         <IconButton 
                                             v-if="hasPermission('edit-task') || hasPermission('manage-task')"
                                             @click.stop="editTask(task.id)"
@@ -204,26 +252,38 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Due Date -->
-                                    <div class="text-xs font-medium" 
-                                        :class="{
-                                            'text-red-500': isOverdue(task.due_date),
-                                            'text-gray-500 dark:text-gray-400': !isOverdue(task.due_date)
-                                        }"
-                                    >
-                                        <span class="flex items-center">
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ formatDate(task.due_date) }}
-                                        </span>
+                                    <!-- Due Date & Archive Button -->
+                                    <div class="flex items-center space-x-2">
+                                        <div class="text-xs font-medium" 
+                                            :class="{
+                                                'text-red-500': isOverdue(task.due_date),
+                                                'text-gray-500 dark:text-gray-400': !isOverdue(task.due_date)
+                                            }"
+                                        >
+                                            <span class="flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                {{ formatDate(task.due_date) }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
+                            <!-- Load More Button -->
+                            <div v-if="hasMoreTasks(status)" class="mt-4 text-center">
+                                <button
+                                    @click="loadMore(status)"
+                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                    Muat lebih banyak...
+                                </button>
+                            </div>
+
                             <!-- Empty State -->
                             <div 
-                                v-if="tasksGroupedByStatus[status].length === 0" 
+                                v-if="filteredTasksByStatus(status).length === 0" 
                                 class="flex items-center justify-center h-24 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg"
                             >
                                 <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada task</p>
@@ -300,10 +360,23 @@ const props = defineProps({
 const search = ref('');
 const priorityFilter = ref('');
 const categoryFilter = ref('');
+const dateFilter = ref({
+    start: '',
+    end: ''
+});
 const selectedTask = ref(null);
 const confirmingTaskDeletion = ref(false);
 const form = useForm({});
 const debugMode = ref(false);  // Set ke true untuk debugging
+
+// Pagination state
+const itemsPerPage = 5;
+const currentPage = ref({
+    draft: 1,
+    in_progress: 1,
+    completed: 1,
+    cancelled: 1
+});
 
 // Array status tetap
 const statuses = [
@@ -343,7 +416,7 @@ onMounted(() => {
     }
 });
 
-// Filter tasks berdasarkan input pencarian
+// Filter tasks berdasarkan input pencarian dan tanggal
 const filteredTasks = computed(() => {
     return props.tasks.filter(task => {
         // Filter berdasarkan pencarian teks
@@ -352,6 +425,22 @@ const filteredTasks = computed(() => {
             if (!task.title?.toLowerCase().includes(searchTerm) && 
                 !task.description?.toLowerCase().includes(searchTerm)) {
                 return false;
+            }
+        }
+
+        // Filter berdasarkan tanggal
+        if (dateFilter.value.start || dateFilter.value.end) {
+            const taskDate = new Date(task.created_at);
+            
+            if (dateFilter.value.start) {
+                const startDate = new Date(dateFilter.value.start);
+                if (taskDate < startDate) return false;
+            }
+            
+            if (dateFilter.value.end) {
+                const endDate = new Date(dateFilter.value.end);
+                endDate.setHours(23, 59, 59, 999);
+                if (taskDate > endDate) return false;
             }
         }
 
@@ -365,11 +454,16 @@ const filteredTasks = computed(() => {
             return false;
         }
 
+        // Filter task yang sudah diarsip
+        if (task.archived_at) {
+            return false;
+        }
+
         return true;
     });
 });
 
-// KODE BARU: Group tasks berdasarkan status, dengan deduplikasi
+// Computed untuk group tasks berdasarkan status
 const tasksGroupedByStatus = computed(() => {
     // Buat struktur kosong untuk semua status
     const result = {
@@ -379,28 +473,49 @@ const tasksGroupedByStatus = computed(() => {
         cancelled: []
     };
     
-    // Map untuk melacak task yang sudah ditambahkan (mencegah duplikat)
-    const processedTaskIds = new Set();
-    
     // Proses semua task yang sudah difilter
     filteredTasks.value.forEach(task => {
-        // Skip jika task ini sudah diproses (cegah duplikat)
-        if (processedTaskIds.has(task.id)) {
-            console.warn(`[KANBAN] Melewati task duplikat: ID=${task.id}, title=${task.title}`);
-            return;
-        }
-        
-        // Tambahkan ke set task yang sudah diproses
-        processedTaskIds.add(task.id);
-        
         // Tentukan status (default ke 'draft' jika tidak valid)
         const status = task.status && statuses.includes(task.status) ? task.status : 'draft';
-        
         // Tambahkan task ke kolom status yang sesuai
         result[status].push(task);
     });
     
     return result;
+});
+
+// Filter tasks berdasarkan status dengan pagination
+const filteredTasksByStatus = (status) => {
+    return tasksGroupedByStatus.value[status] || [];
+};
+
+// Pagination untuk tasks berdasarkan status
+const paginatedTasksByStatus = (status) => {
+    const tasksInStatus = filteredTasksByStatus(status);
+    const page = currentPage.value[status] || 1;
+    return tasksInStatus.slice(0, page * itemsPerPage);
+};
+
+// Check if has more tasks
+const hasMoreTasks = (status) => {
+    const tasksInStatus = filteredTasksByStatus(status);
+    const page = currentPage.value[status] || 1;
+    return tasksInStatus.length > page * itemsPerPage;
+};
+
+// Load more tasks
+const loadMore = (status) => {
+    if (!currentPage.value[status]) {
+        currentPage.value[status] = 1;
+    }
+    currentPage.value[status]++;
+};
+
+// Reset pagination when filters change
+watch([search, dateFilter, priorityFilter, categoryFilter], () => {
+    statuses.forEach(status => {
+        currentPage.value[status] = 1;
+    });
 });
 
 // Helper functions
@@ -621,5 +736,16 @@ const viewTaskDetails = (taskId) => {
 
 .animate-highlight {
     animation: highlight 2s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .grid-cols-1 > * {
+        margin-bottom: 0.5rem;
+    }
+    
+    .grid-cols-1 > *:last-child {
+        margin-bottom: 0;
+    }
 }
 </style> 
