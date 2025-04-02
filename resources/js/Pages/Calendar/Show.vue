@@ -2,6 +2,17 @@
     <Head :title="'Event: ' + event.title" />
 
     <AuthenticatedLayout :auth="auth" title="Detail Event">
+        <!-- Alert Component -->
+        <div v-if="showAlert" class="mb-6">
+            <Alert 
+                :variant="alertType === 'error' ? 'danger' : 'success'"
+                :dismissible="true"
+                @close="showAlert = false"
+            >
+                {{ alertMessage }}
+            </Alert>
+        </div>
+
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
@@ -277,20 +288,34 @@
                                     <!-- Attachments -->
                                     <template v-if="comment.attachments && comment.attachments.length > 0">
                                         <div class="mt-3 space-y-2">
-                                            <div v-for="attachment in comment.attachments" :key="attachment.id" class="flex items-center p-2 rounded bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-                                                <div v-if="attachment.type === 'file'" class="flex items-center">
-                                                    <DocumentIcon class="w-5 h-5 mr-2 text-blue-500" />
-                                                    <a :href="attachment.url" target="_blank" class="text-sm text-blue-500 hover:underline">
-                                                        {{ attachment.filename || 'File' }}
-                                                        <span v-if="attachment.file_size" class="text-xs text-gray-500">
-                                                            ({{ formatFileSize(attachment.file_size) }})
+                                            <div v-for="attachment in comment.attachments" :key="attachment.id" class="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                                <div class="flex items-center">
+                                                    <div v-if="attachment.type === 'file'" class="flex items-center">
+                                                        <DocumentIcon class="w-5 h-5 mr-2 text-blue-500" />
+                                                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                                                            {{ attachment.filename || 'File' }}
+                                                            <span v-if="attachment.file_size" class="text-xs text-gray-500 ml-1">
+                                                                ({{ formatFileSize(attachment.file_size) }})
+                                                            </span>
                                                         </span>
-                                                    </a>
+                                                    </div>
+                                                    <div v-else-if="attachment.type === 'link'" class="flex items-center">
+                                                        <LinkIcon class="w-5 h-5 mr-2 text-blue-500" />
+                                                        <a :href="attachment.url" target="_blank" class="text-sm text-blue-500 hover:underline">
+                                                            {{ attachment.title || attachment.url }}
+                                                        </a>
+                                                    </div>
                                                 </div>
-                                                <div v-else-if="attachment.type === 'link'" class="flex items-center">
-                                                    <LinkIcon class="w-5 h-5 mr-2 text-blue-500" />
-                                                    <a :href="attachment.url" target="_blank" class="text-sm text-blue-500 hover:underline">
-                                                        {{ attachment.title || attachment.url }}
+                                                
+                                                <!-- Download Button for File Attachments -->
+                                                <div v-if="attachment.type === 'file'" class="flex items-center">
+                                                    <a 
+                                                        :href="attachment.url" 
+                                                        download
+                                                        class="inline-flex items-center px-2 py-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+                                                    >
+                                                        <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
+                                                        Download
                                                     </a>
                                                 </div>
                                             </div>
@@ -373,6 +398,26 @@
                 </div>
             </div>
         </Modal>
+
+        <!-- Alert Modal -->
+        <Modal :show="showAlertModal" @close="showAlertModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    {{ alertModalTitle }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {{ alertModalMessage }}
+                </p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <PrimaryButton
+                        @click="showAlertModal = false"
+                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    >
+                        Tutup
+                    </PrimaryButton>
+                </div>
+            </div>
+        </Modal>
     </AuthenticatedLayout>
 </template>
 
@@ -383,6 +428,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import Alert from '@/Components/Alert.vue';
 import { 
     PencilIcon, 
     TrashIcon,
@@ -408,6 +455,16 @@ const props = defineProps({
 
 const showDeleteModal = ref(false);
 const isProcessing = ref(false);
+
+// Alert state
+const showAlert = ref(false);
+const alertMessage = ref('');
+const alertType = ref('error');
+
+// Alert Modal state
+const showAlertModal = ref(false);
+const alertModalMessage = ref('');
+const alertModalTitle = ref('');
 
 // Comments and attachments
 const newComment = ref('');
@@ -538,7 +595,19 @@ const removeLink = () => {
 
 // Add comment
 const addComment = async () => {
-    if (!newComment.value && !uploadedFile.value && !selectedLink.value) return;
+    if (!newComment.value && !uploadedFile.value && !selectedLink.value) {
+        alertModalTitle.value = 'Komentar Kosong';
+        alertModalMessage.value = 'Silakan isi komentar atau lampirkan file/link';
+        showAlertModal.value = true;
+        return;
+    }
+    
+    if (!newComment.value && (uploadedFile.value || selectedLink.value)) {
+        alertModalTitle.value = 'Komentar Kosong';
+        alertModalMessage.value = 'Silakan isi komentar terlebih dahulu sebelum melampirkan file atau link';
+        showAlertModal.value = true;
+        return;
+    }
     
     isSubmitting.value = true;
     
@@ -581,6 +650,11 @@ const addComment = async () => {
             uploadedFile.value = null;
             selectedLink.value = null;
             
+            // Show success alert
+            alertModalTitle.value = 'Berhasil';
+            alertModalMessage.value = 'Komentar berhasil dikirim';
+            showAlertModal.value = true;
+            
             // Refresh page to show new comment
             window.location.href = route('calendar.show', props.event.id) + '?refresh=' + Date.now();
         } else {
@@ -588,7 +662,9 @@ const addComment = async () => {
         }
     } catch (error) {
         console.error('Error posting comment:', error);
-        alert('Gagal mengirim komentar. Silakan coba lagi. Detail: ' + (error.response?.data?.message || error.message));
+        alertModalTitle.value = 'Gagal';
+        alertModalMessage.value = 'Gagal mengirim komentar. Silakan coba lagi. Detail: ' + (error.response?.data?.message || error.message);
+        showAlertModal.value = true;
     } finally {
         isSubmitting.value = false;
     }

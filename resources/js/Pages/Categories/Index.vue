@@ -44,9 +44,6 @@
                                             Nama
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Tipe
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Deskripsi
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -69,16 +66,6 @@
                                                     {{ category.name }}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                                :class="{
-                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': category.type === 'content',
-                                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': category.type === 'task'
-                                                }"
-                                            >
-                                                {{ category.type === 'content' ? 'Konten' : 'Task' }}
-                                            </span>
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="text-sm text-gray-900 dark:text-gray-100">
@@ -193,8 +180,7 @@ const filteredCategories = computed(() => {
     const searchTerm = search.value.toLowerCase();
     return props.categories.filter(category => 
         category.name.toLowerCase().includes(searchTerm) ||
-        category.description?.toLowerCase().includes(searchTerm) ||
-        category.type.toLowerCase().includes(searchTerm)
+        category.description?.toLowerCase().includes(searchTerm)
     );
 });
 

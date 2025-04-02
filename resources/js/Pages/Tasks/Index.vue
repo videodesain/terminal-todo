@@ -494,71 +494,86 @@ const isOverdue = (dueDate) => {
 const handleDragStart = (event, task) => {
     isDragging.value = true;
     draggingTask.value = task;
-    // Tambahkan data untuk transfer
-    event.dataTransfer.setData('text/plain', task.id);
+    event.dataTransfer.setData('text/plain', task.id.toString());
     event.dataTransfer.effectAllowed = 'move';
+    // Tambahkan class untuk visual feedback
+    event.target.classList.add('opacity-50');
 };
 
 const handleDragOver = (event, status) => {
+    event.preventDefault();
     isDraggingOver.value = status;
     event.dataTransfer.dropEffect = 'move';
+    // Tambahkan visual feedback untuk drop zone
+    event.currentTarget.classList.add('bg-blue-50', 'dark:bg-blue-900');
 };
 
-const handleDragLeave = () => {
+const handleDragLeave = (event) => {
+    event.preventDefault();
     isDraggingOver.value = null;
+    // Hapus visual feedback
+    event.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900');
 };
 
-const handleDragEnd = () => {
+const handleDragEnd = (event) => {
     isDragging.value = false;
     draggingTask.value = null;
     isDraggingOver.value = null;
+    // Hapus visual feedback
+    if (event.target) {
+        event.target.classList.remove('opacity-50');
+    }
 };
 
 const handleDrop = async (event, newStatus) => {
-    const taskId = event.dataTransfer.getData('text/plain');
+    event.preventDefault();
     
-    // Batal jika tidak ada perubahan status
+    // Hapus visual feedback
+    event.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900');
+    
+    const taskId = event.dataTransfer.getData('text/plain');
+    console.log('Dropping task:', taskId, 'to status:', newStatus);
+    
     if (!draggingTask.value || draggingTask.value.status === newStatus) {
-        handleDragEnd();
+        handleDragEnd(event);
         return;
     }
     
     try {
-        // Optimistic update
         const originalStatus = draggingTask.value.status;
         draggingTask.value.status = newStatus;
         
-        // Buat permintaan API untuk update status
         const response = await axios.patch(route('tasks.update-status', taskId), {
             status: newStatus
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
         });
         
-        // Jika berhasil, perbarui task di state
         if (response.data.success) {
             const updatedTask = response.data.task;
+            const taskIndex = props.tasks.findIndex(t => t.id === parseInt(updatedTask.id));
             
-            // Update task yang ada dengan data baru
-            const taskIndex = props.tasks.findIndex(t => t.id === updatedTask.id);
             if (taskIndex !== -1) {
-                props.tasks[taskIndex] = updatedTask;
+                const updatedTaskCopy = { ...updatedTask };
+                props.tasks[taskIndex] = updatedTaskCopy;
+                console.log('Task updated successfully:', updatedTaskCopy);
             }
             
-            // Tampilkan notifikasi sukses
             toast.success(`Status task berhasil diubah menjadi ${getStatusLabel(newStatus)}`);
         }
     } catch (error) {
-        console.error('Gagal memperbarui status task:', error);
-        
-        // Kembalikan status jika gagal (rollback optimistic update)
+        console.error('Error updating task status:', error);
         if (draggingTask.value) {
             draggingTask.value.status = originalStatus;
         }
         
-        // Tampilkan pesan error
-        toast.error('Gagal memperbarui status task');
+        const errorMessage = error.response?.data?.message || 'Gagal memperbarui status task';
+        toast.error(errorMessage);
     } finally {
-        // Reset state drag & drop
-        handleDragEnd();
+        handleDragEnd(event);
     }
 };
 

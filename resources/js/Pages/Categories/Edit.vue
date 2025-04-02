@@ -13,7 +13,7 @@
                 <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         <form @submit.prevent="submit" class="space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel for="name" value="Nama Kategori" />
                                     <TextInput
@@ -25,21 +25,6 @@
                                         autofocus
                                     />
                                     <InputError :message="form.errors.name" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <InputLabel for="type" value="Tipe" />
-                                    <SelectInput
-                                        id="type"
-                                        v-model="form.type"
-                                        class="mt-1 block w-full"
-                                        required
-                                    >
-                                        <option value="">Pilih Tipe</option>
-                                        <option value="content">Konten</option>
-                                        <option value="task">Task</option>
-                                    </SelectInput>
-                                    <InputError :message="form.errors.type" class="mt-2" />
                                 </div>
 
                                 <div>
@@ -126,7 +111,6 @@ const props = defineProps({
 
 const form = useForm({
     name: props.category.name,
-    type: props.category.type,
     color: props.category.color,
     description: props.category.description,
     is_active: props.category.is_active

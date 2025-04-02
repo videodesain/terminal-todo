@@ -36,25 +36,34 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
-        const app = createApp({ render: () => h(App, props) });
+        const app = createApp({ render: () => h(App, props) })
         
         // Lazy load heavy components
+        app.component('TaskList', defineAsyncComponent(() => 
+            import('./components/Tasks/List.vue')
+        ))
+        app.component('TaskCreate', defineAsyncComponent(() => 
+            import('./components/Tasks/Create.vue')
+        ))
+        app.component('TaskShow', defineAsyncComponent(() => 
+            import('./components/Tasks/Show.vue')
+        ))
         app.component('UserManagement', defineAsyncComponent(() => 
             import('./Pages/Users/Index.vue')
-        ));
+        ))
         app.component('RoleManagement', defineAsyncComponent(() => 
             import('./Pages/Roles/Index.vue')
-        ));
+        ))
         app.component('ProfileSettings', defineAsyncComponent(() => 
             import('./Pages/Profile/Edit.vue')
-        ));
+        ))
 
-        app.use(plugin);
-        app.use(ZiggyVue);
+        app.use(plugin)
+        app.use(ZiggyVue)
         
-        return app.mount(el);
+        return app.mount(el)
     },
     progress: {
         color: "#4B5563",
     },
-});
+})
