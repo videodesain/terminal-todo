@@ -101,23 +101,23 @@
                 </SelectInput>
                 <InputError class="mt-2" :message="form.errors.team_id" />
             </div>
-        </div>
 
-        <div>
-            <InputLabel for="event-status" value="Status" />
-            <SelectInput
-                id="event-status"
-                class="mt-1 block w-full"
-                v-model="form.status"
-                required
-            >
-                <option value="">Pilih Status</option>
-                <option value="planned">Direncanakan</option>
-                <option value="in_progress">Dalam Proses</option>
-                <option value="published">Dipublikasi</option>
-                <option value="cancelled">Dibatalkan</option>
-            </SelectInput>
-            <InputError class="mt-2" :message="form.errors.status" />
+            <div>
+                <InputLabel for="event-status" value="Status" />
+                <SelectInput
+                    id="event-status"
+                    class="mt-1 block w-full"
+                    v-model="form.status"
+                    required
+                >
+                    <option value="">Pilih Status</option>
+                    <option value="planned">Direncanakan</option>
+                    <option value="in_progress">Dalam Proses</option>
+                    <option value="published">Dipublikasi</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </SelectInput>
+                <InputError class="mt-2" :message="form.errors.status" />
+            </div>
         </div>
 
         <div>

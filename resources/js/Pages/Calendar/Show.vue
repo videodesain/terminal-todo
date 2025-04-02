@@ -551,6 +551,8 @@ const addComment = async () => {
         if (uploadedFile.value) {
             formData.append('attachment', uploadedFile.value);
             formData.append('attachment_type', 'file');
+            formData.append('attachment_filename', uploadedFile.value.name);
+            formData.append('attachment_file_size', uploadedFile.value.size);
         }
         
         // Add link if selected
@@ -561,6 +563,7 @@ const addComment = async () => {
         }
         
         console.log('Submitting comment to:', route('calendar.comments.store', props.event.id));
+        console.log('Form data:', Object.fromEntries(formData));
         
         // Send comment to server
         const response = await axios.post(route('calendar.comments.store', props.event.id), formData, {
