@@ -404,6 +404,7 @@ const isDeleting = ref(false);
 
 const deletingTask = ref(false);
 const taskDeleteForm = useForm({});
+const archiveForm = useForm({});
 
 const getStatusLabel = (status) => {
     const labels = {
@@ -692,11 +693,10 @@ const showArchiveButton = computed(() => {
 
 // Update method archiveTask
 const archiveTask = () => {
-    router.post(route('tasks.archive', props.task.id), {}, {
-        onSuccess: () => {
-            router.visit(route('tasks.index'));
-        },
-    });
+    axios.post(route('tasks.archive', props.task.id))
+        .then(() => {
+            window.location.href = route('tasks.index');
+        });
 };
 
 </script> 
