@@ -270,8 +270,8 @@ const form = useForm({
     team_id: props.task.team_id,
     priority: props.task.priority,
     status: props.task.status,
-    start_date: props.task.start_date,
-    due_date: props.task.due_date,
+    start_date: props.task.start_date ? props.task.start_date.replace(' ', 'T') : null,
+    due_date: props.task.due_date ? props.task.due_date.replace(' ', 'T') : null,
     assignees: props.task.assignees.map(assignee => assignee.id)
 });
 
