@@ -192,15 +192,6 @@
                       <p v-if="preview.description" class="text-sm text-gray-600 dark:text-gray-400">{{ preview.description }}</p>
                     </div>
 
-                    <!-- Author info -->
-                    <div v-if="preview.author_name" class="text-sm text-gray-500 dark:text-gray-400">
-                      By {{ preview.author_name }}
-                    </div>
-
-                    <!-- Provider info -->
-                    <div v-if="preview.provider_name" class="text-xs text-gray-400 dark:text-gray-500">
-                      via {{ preview.provider_name }}
-                    </div>
                   </div>
 
                   <!-- Preview untuk tipe lain -->
