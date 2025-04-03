@@ -1,10 +1,19 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, inject } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import AppNavigation from '@/Components/Navigation/AppNavigation.vue';
 import { Head } from "@inertiajs/vue3";
 import { usePermission } from '@/Composables/usePermission';
+
+// Gunakan route dari global properties
+const route = (...args) => {
+    if (typeof window.route === 'undefined') {
+        console.error('Route function not found');
+        return '#';
+    }
+    return window.route(...args);
+};
 
 const isSidebarOpen = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -27,37 +36,10 @@ const props = defineProps({
 
 // Gunakan usePage untuk mendapatkan data auth
 const page = usePage();
-const auth = computed(() => {
-    console.log('Auth dari props:', props.auth);
-    console.log('Auth dari usePage:', page.props.auth);
-    
-    // Jika props.auth memiliki user yang valid, gunakan itu
-    if (props.auth?.user?.id) {
-        console.log('Using auth from props', props.auth);
-        return props.auth;
-    }
-    
-    // Fallback ke auth dari usePage
-    console.log('Using auth from usePage', page.props.auth);
-    return page.props.auth;
-});
+const auth = computed(() => props.auth || page.props.auth);
 
 // Computed untuk user yang sudah terautentikasi
-const authenticatedUser = computed(() => {
-    const user = auth.value?.user;
-    
-    // Log detailed info about the user for debugging
-    console.log('Authenticated User Details:', {
-        userExists: !!user,
-        userId: user?.id,
-        userName: user?.name,
-        roles: user?.roles,
-        permissions: user?.permissions?.length,
-        fullData: user
-    });
-    
-    return user;
-});
+const authenticatedUser = computed(() => auth.value?.user);
 
 // Dark Mode State
 const isDark = ref(false);

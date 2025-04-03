@@ -2,12 +2,14 @@ import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
 import { VitePWA } from 'vite-plugin-pwa';
+import path from 'path';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/css/app.css", "resources/js/app.js"],
+            input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            buildDirectory: "build"
         }),
         vue({
             template: {
@@ -21,63 +23,49 @@ export default defineConfig({
             registerType: 'autoUpdate',
             manifest: {
                 name: 'Terminal Todo',
-                short_name: 'Terminal Todo',
+                short_name: 'Terminal',
                 theme_color: '#ffffff',
-                icons: [
-                    {
-                        src: '/img/icons/android-chrome-192x192.png',
-                        sizes: '192x192',
-                        type: 'image/png',
-                    },
-                    {
-                        src: '/img/icons/android-chrome-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                    },
-                ],
+                icons: [],
+                background_color: '#ffffff',
+                display: 'standalone',
             },
-            workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
-            }
-        })
+        }),
     ],
     resolve: {
         alias: {
-            '@': '/resources/js'
-        }
+            '@': '/resources/js',
+        },
+    },
+    optimizeDeps: {
+        include: [
+            '@inertiajs/vue3',
+            '@meforma/vue-toaster',
+            'axios',
+            'vue'
+        ],
+        exclude: ['ziggy-js']
     },
     build: {
         outDir: 'public/build',
-        emptyOutDir: true,
         manifest: true,
-        chunkSizeWarningLimit: 1024,
         rollupOptions: {
-            external: [
-                'fsevents',
-                /^node:/,
-                'crypto',
-                'fs',
-                'path',
-                'url',
-                'module',
-                'os'
-            ],
             output: {
                 manualChunks: {
-                    vendor: ['vue', '@inertiajs/vue3']
+                    vendor: ['vue', '@inertiajs/vue3', 'axios'],
                 }
-            }
-        },
-        target: 'esnext',
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true,
-                drop_debugger: true
             }
         }
     },
-    optimizeDeps: {
-        include: ['vue', '@inertiajs/vue3']
+    server: {
+        port: 5175,
+        strictPort: true,
+        host: '127.0.0.1',
+        hmr: {
+            host: '127.0.0.1',
+            protocol: 'ws',
+        },
+        watch: {
+            usePolling: true,
+        }
     }
 });

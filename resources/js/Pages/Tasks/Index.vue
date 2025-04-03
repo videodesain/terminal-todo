@@ -345,12 +345,25 @@ import IconButton from '@/Components/IconButton.vue';
 import PermissionGate from '@/Components/PermissionGate.vue';
 import axios from 'axios';
 import toast from '@/toast.js';
+import { usePermission } from '@/Composables/usePermission';
 
 const props = defineProps({
-    auth: Object,
-    tasks: Array,
-    categories: Array,
-    highlight: String,
+    auth: {
+        type: Object,
+        required: true
+    },
+    tasks: {
+        type: Array,
+        required: true
+    },
+    categories: {
+        type: Array,
+        required: true
+    },
+    highlight: {
+        type: String,
+        default: null
+    },
     statusFilter: String,
     timestamp: Number,
     error: String
@@ -695,6 +708,15 @@ const handleDrop = async (event, newStatus) => {
 // Fungsi untuk melihat detail task
 const viewTaskDetails = (taskId) => {
     router.visit(route('tasks.show', taskId));
+};
+
+// Fungsi route yang aman
+const route = (...args) => {
+    if (typeof window.route === 'undefined') {
+        console.error('Route function not found');
+        return '#';
+    }
+    return window.route(...args);
 };
 </script>
 

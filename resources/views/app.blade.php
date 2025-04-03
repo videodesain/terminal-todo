@@ -46,9 +46,21 @@
         <link rel="icon" href="{{ Storage::url(Cache::get('website_settings')['site_favicon']) }}" type="image/x-icon"/>
     @endif
 
-    @routes
-    @vite(['resources/js/app.js', 'resources/css/app.css'])
+    @routes(['verify' => true])
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @inertiaHead
+
+    <!-- Debug Script -->
+    <script>
+        window.addEventListener('load', function() {
+            if (window.route) {
+                console.log('Ziggy routes loaded:', Object.keys(window.route().routes));
+            } else {
+                console.error('Ziggy routes not loaded');
+            }
+        });
+    </script>
 </head>
 <body class="font-sans antialiased h-full bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">
     @inertia
