@@ -1,10 +1,9 @@
 import "./bootstrap";
 import "../css/app.css";
 
-import { createApp, h, defineAsyncComponent } from "vue";
+import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
-import { ZiggyVue } from '@/../../vendor/tightenco/ziggy';
 import axios from 'axios';
 
 // Setup Axios CSRF token
@@ -30,40 +29,18 @@ if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.match
     document.documentElement.classList.remove('dark')
 }
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
-        const app = createApp({ render: () => h(App, props) })
-        
-        // Lazy load heavy components
-        app.component('TaskList', defineAsyncComponent(() => 
-            import('./components/Tasks/List.vue')
-        ))
-        app.component('TaskCreate', defineAsyncComponent(() => 
-            import('./components/Tasks/Create.vue')
-        ))
-        app.component('TaskShow', defineAsyncComponent(() => 
-            import('./components/Tasks/Show.vue')
-        ))
-        app.component('UserManagement', defineAsyncComponent(() => 
-            import('./Pages/Users/Index.vue')
-        ))
-        app.component('RoleManagement', defineAsyncComponent(() => 
-            import('./Pages/Roles/Index.vue')
-        ))
-        app.component('ProfileSettings', defineAsyncComponent(() => 
-            import('./Pages/Profile/Edit.vue')
-        ))
-
-        app.use(plugin)
-        app.use(ZiggyVue)
-        
-        return app.mount(el)
+        const app = createApp({ render: () => h(App, props) });
+        app.use(plugin);
+        app.config.globalProperties.$route = window.route;
+        return app.mount(el);
     },
     progress: {
         color: "#4B5563",
     },
-})
+});

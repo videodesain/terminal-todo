@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
-import path from "path";
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
@@ -21,86 +20,55 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             manifest: {
-                name: 'Your App Name',
-                short_name: 'App',
+                name: 'Terminal Todo',
+                short_name: 'Terminal Todo',
                 theme_color: '#ffffff',
                 icons: [
                     {
-                        src: '/icon-192.png',
+                        src: '/img/icons/android-chrome-192x192.png',
                         sizes: '192x192',
-                        type: 'image/png'
+                        type: 'image/png',
                     },
                     {
-                        src: '/icon-512.png',
+                        src: '/img/icons/android-chrome-512x512.png',
                         sizes: '512x512',
-                        type: 'image/png'
-                    }
-                ]
+                        type: 'image/png',
+                    },
+                ],
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'google-fonts-cache',
-                            expiration: {
-                                maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200]
-                            }
-                        }
-                    },
-                    {
-                        urlPattern: /^https:\/\/api\..*\/api\/.*/i,
-                        handler: 'NetworkFirst',
-                        options: {
-                            cacheName: 'api-cache',
-                            expiration: {
-                                maxEntries: 100,
-                                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-                            }
-                        }
-                    },
-                    {
-                        urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'images-cache',
-                            expiration: {
-                                maxEntries: 50,
-                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-                            }
-                        }
-                    }
-                ]
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
             }
         })
     ],
     resolve: {
         alias: {
-            "@": "/resources/js",
-        },
+            '@': '/resources/js'
+        }
     },
     build: {
-        // Build optimizations
-        chunkSizeWarningLimit: 1000,
+        outDir: 'public/build',
+        emptyOutDir: true,
+        manifest: true,
+        chunkSizeWarningLimit: 1024,
         rollupOptions: {
+            external: [
+                'fsevents',
+                /^node:/,
+                'crypto',
+                'fs',
+                'path',
+                'url',
+                'module',
+                'os'
+            ],
             output: {
                 manualChunks: {
-                    vendor: ['vue', '@inertiajs/vue3'],
-                    utils: ['date-fns', 'lodash'],
+                    vendor: ['vue', '@inertiajs/vue3']
                 }
             }
         },
-        // Cache busting
-        assetsDir: 'assets',
-        assetsInlineLimit: 4096,
-        sourcemap: false,
-        // Minification
+        target: 'esnext',
         minify: 'terser',
         terserOptions: {
             compress: {
@@ -108,5 +76,8 @@ export default defineConfig({
                 drop_debugger: true
             }
         }
+    },
+    optimizeDeps: {
+        include: ['vue', '@inertiajs/vue3']
     }
 });
