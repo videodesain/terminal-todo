@@ -14,32 +14,6 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <!-- Dark Mode Initialization -->
-    <script>
-        // Check localStorage dan system preference
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.colorScheme = 'dark';
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.style.colorScheme = 'light';
-        }
-
-        // Listen untuk perubahan system preference
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            if (!localStorage.theme) {
-                if (e.matches) {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.colorScheme = 'dark';
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.style.colorScheme = 'light';
-                }
-            }
-        });
-    </script>
 
     <!-- Dynamic Favicon -->
     @if(Cache::has('website_settings') && !empty(Cache::get('website_settings')['site_favicon']))
@@ -47,20 +21,8 @@
     @endif
 
     @routes(['verify' => true])
-    @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @inertiaHead
-
-    <!-- Debug Script -->
-    <script>
-        window.addEventListener('load', function() {
-            if (window.route) {
-                console.log('Ziggy routes loaded:', Object.keys(window.route().routes));
-            } else {
-                console.error('Ziggy routes not loaded');
-            }
-        });
-    </script>
 </head>
 <body class="font-sans antialiased h-full bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">
     @inertia

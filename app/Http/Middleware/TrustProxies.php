@@ -17,9 +17,10 @@ class TrustProxies
             $response->header('X-Content-Type-Options', 'nosniff');
             $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
             $response->header('Permissions-Policy', 'geolocation=(), microphone=()');
+            $response->header('Content-Security-Policy', "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'");
             
             if (app()->environment('production')) {
-                $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+                $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
             }
         }
 

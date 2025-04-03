@@ -9,7 +9,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
-            buildDirectory: "build"
+            buildDirectory: 'build'
         }),
         vue({
             template: {
@@ -47,12 +47,25 @@ export default defineConfig({
     },
     build: {
         outDir: 'public/build',
+        assetsDir: '',
         manifest: true,
         rollupOptions: {
+            input: {
+                app: 'resources/js/app.js',
+                style: 'resources/css/app.css'
+            },
             output: {
                 manualChunks: {
-                    vendor: ['vue', '@inertiajs/vue3', 'axios'],
-                }
+                    vendor: ['vue', '@inertiajs/vue3', 'axios']
+                },
+                assetFileNames: (assetInfo) => {
+                    if (assetInfo.name.endsWith('.css')) {
+                        return 'css/[name][extname]';
+                    }
+                    return 'assets/[name][extname]';
+                },
+                chunkFileNames: 'js/[name].js',
+                entryFileNames: 'js/[name].js'
             }
         }
     },
@@ -61,7 +74,7 @@ export default defineConfig({
         strictPort: true,
         host: '127.0.0.1',
         hmr: {
-            host: '127.0.0.1',
+            host: 'localhost',
             protocol: 'ws',
         },
         watch: {

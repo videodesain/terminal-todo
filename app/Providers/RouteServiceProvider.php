@@ -50,7 +50,7 @@ class RouteServiceProvider extends ServiceProvider
         
         // Media upload rate limiting
         RateLimiter::for('uploads', function (Request $request) {
-            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+            return Limit::perHour(100)->by($request->user()?->id ?: $request->ip());
         });
         
         // Dashboard access rate limiting
@@ -65,6 +65,24 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
+        });
+    }
+
+    /**
+     * Configure the rate limiters for the application.
+     */
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('auth', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('uploads', function (Request $request) {
+            return Limit::perHour(100)->by($request->user()?->id ?: $request->ip());
         });
     }
 } 
