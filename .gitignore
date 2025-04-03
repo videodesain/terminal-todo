@@ -21,7 +21,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-*.php
 artisan optimize:clear.php
 fix_permissions.php
 check_permissions.php
