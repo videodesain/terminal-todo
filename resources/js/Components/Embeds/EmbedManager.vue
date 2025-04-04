@@ -112,6 +112,14 @@ const platform = computed(() => {
   // Twitter / X
   if (cleanUrl.includes('twitter.com') || cleanUrl.includes('x.com') || 
       cleanUrl.includes('publish.twitter.com')) {
+    // Debug khusus untuk Twitter
+    if (props.metaData) {
+      console.log('[EmbedManager] Twitter metadata detected:', {
+        url: props.url,
+        thumbnail_url: props.metaData.thumbnail_url,
+        metaData: props.metaData
+      });
+    }
     return 'twitter';
   }
   

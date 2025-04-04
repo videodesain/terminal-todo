@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 
 const props = defineProps({
   url: {
@@ -119,11 +119,13 @@ const extractTweetId = (url) => {
   // Handle format @https://publish.twitter.com/?query=...
   if (url.includes('publish.twitter.com') && url.includes('query=')) {
     try {
+      console.log('[TwitterEmbed] Mendeteksi URL publish.twitter.com:', url);
       // Ekstrak URL asli yang ada dalam parameter query
       let queryParam = new URLSearchParams(url.split('?')[1]).get('query');
       if (queryParam) {
         // Decode URL parameter
         queryParam = decodeURIComponent(queryParam);
+        console.log('[TwitterEmbed] URL asli dari query:', queryParam);
         // Recursive call untuk URL asli
         return extractTweetId(queryParam);
       }
@@ -216,6 +218,8 @@ const useOEmbedStrategy = async (tweetId) => {
     // Tentukan tema (dark/light)
     const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     
+    console.log('[TwitterEmbed] Menggunakan strategi oEmbed dengan ID:', tweetId);
+    
     // Construct oEmbed URL
     const oembedUrl = `https://publish.twitter.com/oembed?url=https://twitter.com/i/web/status/${tweetId}&omit_script=true&align=center&dnt=true&theme=${currentTheme}&lang=id&maxheight=${props.orientation === 'portrait' ? '700' : '400'}`;
     
@@ -226,6 +230,7 @@ const useOEmbedStrategy = async (tweetId) => {
     }
     
     const data = await response.json();
+    console.log('[TwitterEmbed] Data oEmbed berhasil diperoleh', data);
     
     // Set HTML dari response
     embedHtml.value = data.html;
@@ -245,6 +250,8 @@ const useIframeStrategy = (tweetId) => {
   try {
     // Tentukan tema (dark/light)
     const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    
+    console.log('[TwitterEmbed] Menggunakan strategi iframe langsung dengan ID:', tweetId);
     
     // Set HTML untuk iframe
     embedHtml.value = `
@@ -267,9 +274,62 @@ const useIframeStrategy = (tweetId) => {
   }
 };
 
-// Strategi 3: Menggunakan tampilan statis fallback
-// Dalam kasus ini, kita tidak mengubah embedHtml.value,
-// sehingga template akan menampilkan fallback statis
+// Strategi 3: Menggunakan publish.twitter.com embed langsung
+const usePublishStrategy = (url) => {
+  try {
+    if (!url.includes('publish.twitter.com')) {
+      return false;
+    }
+    
+    console.log('[TwitterEmbed] Menggunakan strategi publish.twitter.com langsung');
+    
+    // Ekstrak widget type (Tweet atau Video)
+    let widgetType = 'Tweet';
+    if (url.includes('widget=Video')) {
+      widgetType = 'Video';
+    }
+    
+    // Ekstrak URL asli jika ada
+    let originalUrl = url;
+    if (url.includes('query=')) {
+      try {
+        const queryParam = new URLSearchParams(url.split('?')[1]).get('query');
+        if (queryParam) {
+          originalUrl = decodeURIComponent(queryParam);
+        }
+      } catch (e) {
+        console.error('Error extracting query param:', e);
+      }
+    }
+    
+    // Tambahkan parameter tema jika belum ada
+    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    if (!url.includes('theme=')) {
+      url = url + (url.includes('?') ? '&' : '?') + `theme=${currentTheme}`;
+    }
+    
+    console.log('[TwitterEmbed] Widget Type:', widgetType, 'URL:', url);
+    
+    // Set HTML untuk iframe
+    embedHtml.value = `
+      <div class="twitter-embed-iframe-container ${props.orientation === 'portrait' ? 'portrait' : 'landscape'}">
+        <iframe
+          src="${url}&dnt=true&lang=id"
+          frameborder="0"
+          scrolling="no"
+          allowtransparency="true"
+          allowfullscreen="true"
+          class="twitter-embed-iframe ${props.orientation === 'portrait' ? 'twitter-embed-iframe-portrait' : ''}"
+        ></iframe>
+      </div>
+    `;
+    
+    return true;
+  } catch (error) {
+    console.warn('publish strategy failed:', error);
+    return false;
+  }
+};
 
 // Memuat Twitter widgets script
 const loadTwitterWidgetsScript = () => {
@@ -338,6 +398,99 @@ const loadTwitterWidgetsScript = () => {
   });
 };
 
+// Strategi 4: Menggunakan kode embed langsung dari pengguna
+const useDirectEmbedCode = (embedCode) => {
+  try {
+    if (!embedCode) return false;
+    
+    console.log('[TwitterEmbed] Menggunakan strategi embed code langsung');
+    
+    // Extract the script part of the embed code (if any) to load separately
+    let scriptContent = null;
+    const scriptMatch = embedCode.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+    
+    if (scriptMatch) {
+      scriptContent = scriptMatch[1];
+      // Remove the script tag from the embed HTML to prevent script execution issues
+      embedCode = embedCode.replace(scriptMatch[0], '');
+    }
+    
+    // Set HTML untuk embed langsung
+    embedHtml.value = embedCode;
+    
+    // Eksekusi script jika ada
+    if (scriptContent) {
+      nextTick(() => {
+        try {
+          // Execute the script content in the global context
+          // eslint-disable-next-line no-new-func
+          new Function(scriptContent)();
+          console.log('[TwitterEmbed] Script embed dieksekusi');
+        } catch (e) {
+          console.error('[TwitterEmbed] Error executing embed script:', e);
+          // If script execution fails, try loading twitter widgets script as fallback
+          loadTwitterWidgetsScript();
+        }
+      });
+    } else {
+      // Jika tidak ada script, muat Twitter widget script sebagai fallback
+      loadTwitterWidgetsScript();
+    }
+    
+    return true;
+  } catch (error) {
+    console.warn('[TwitterEmbed] Direct embed code strategy failed:', error);
+    return false;
+  }
+};
+
+// Strategi 5: Menggunakan kode yang disediakan API Twitter terbaru
+const useGeneratedTwitterScript = (tweetId) => {
+  try {
+    if (!tweetId) return false;
+    
+    console.log('[TwitterEmbed] Menggunakan strategi generated script dengan ID:', tweetId);
+    
+    // Tentukan tema (dark/light)
+    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    
+    // Generate script sesuai dengan format yang diberikan
+    const generatedScript = `
+      <div id="twitter-embed-${tweetId}" class="twitter-generated-embed ${props.orientation === 'portrait' ? 'portrait' : 'landscape'}">
+        <blockquote class="twitter-tweet" data-theme="${currentTheme}" data-lang="id" data-dnt="true">
+          <a href="https://twitter.com/i/status/${tweetId}"></a>
+        </blockquote>
+      </div>
+    `;
+    
+    // Set HTML untuk embed langsung
+    embedHtml.value = generatedScript;
+    
+    // Inject Twitter initialization script separately
+    nextTick(() => {
+      // Execute Twitter initialization code
+      if (Function && Function.prototype && Function.prototype.bind) {
+        if (/(MSIE ([6789]|10|11))|Trident/.test(navigator.userAgent)) {
+          // Handle IE browser case
+          console.log('[TwitterEmbed] IE browser detected');
+        }
+        
+        if (window.__twttr && window.__twttr.widgets && window.__twttr.widgets.loaded) {
+          window.twttr.widgets.load();
+        }
+      }
+      
+      // Muat Twitter widget script terlepas dari kondisi di atas
+      loadTwitterWidgetsScript();
+    });
+    
+    return true;
+  } catch (error) {
+    console.warn('[TwitterEmbed] Generated script strategy failed:', error);
+    return false;
+  }
+};
+
 // Reload embed jika terjadi error
 const reloadEmbed = async () => {
   loading.value = true;
@@ -362,20 +515,38 @@ const loadEmbed = async () => {
     tweetId = extractTweetId(props.url);
   }
   
+  // Cek untuk kode embed langsung (preferensi tertinggi)
+  if (props.metaData?.html) {
+    console.log('[TwitterEmbed] Terdeteksi kode HTML dari meta_data, mencoba strategi embed code langsung');
+    const embedSuccess = useDirectEmbedCode(props.metaData.html);
+    if (embedSuccess) return;
+  }
+  
+  // Coba strategi direct publish.twitter.com terlebih dahulu jika URL mengandung publish.twitter.com
+  if (props.url.includes('publish.twitter.com')) {
+    console.log('[TwitterEmbed] URL mengandung publish.twitter.com, mencoba strategi publish');
+    const publishSuccess = usePublishStrategy(props.url);
+    if (publishSuccess) return;
+  }
+  
   if (!tweetId) {
     throw new Error('Tidak dapat menemukan ID tweet');
   }
   
   // Coba menggunakan strategi secara berurutan
-  // 1. oEmbed API (cara yang paling direkomendasikan Twitter)
+  // 1. Script yang dihasilkan, pendekatan paling modern
+  const generatedSuccess = useGeneratedTwitterScript(tweetId);
+  if (generatedSuccess) return;
+  
+  // 2. oEmbed API (cara yang paling direkomendasikan Twitter)
   const oEmbedSuccess = await useOEmbedStrategy(tweetId);
   if (oEmbedSuccess) return;
   
-  // 2. iframe langsung (fallback pertama)
+  // 3. iframe langsung (fallback)
   const iframeSuccess = useIframeStrategy(tweetId);
   if (iframeSuccess) return;
   
-  // 3. Fallback statis (fallback terakhir)
+  // 4. Fallback statis (fallback terakhir)
   // Tidak perlu return value karena komponen akan menampilkan fallback
 };
 
@@ -390,6 +561,15 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+// Tambahkan watch untuk perubahan pada tema
+watch(
+  () => document.documentElement.classList.contains('dark'),
+  async (isDark) => {
+    console.log('[TwitterEmbed] Tema berubah, me-reload embed');
+    await reloadEmbed();
+  }
+);
 </script>
 
 <style scoped>
@@ -465,6 +645,8 @@ onMounted(async () => {
   width: 100%;
   min-height: 400px;
   height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .twitter-embed-iframe-container.portrait {
@@ -476,6 +658,9 @@ onMounted(async () => {
   height: 100%;
   min-height: 400px;
   border: none;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .twitter-embed-iframe-portrait {
@@ -611,5 +796,29 @@ onMounted(async () => {
 
 :deep(.dark) .twitter-date {
   color: #9ca3af;
+}
+
+/* Twitter generated embed */
+.twitter-generated-embed {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+}
+
+.twitter-generated-embed.portrait {
+  min-height: 650px;
+}
+
+.twitter-generated-embed .twitter-tweet {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+/* Fix untuk tema dark pada embed Twitter */
+:deep(.dark) .twitter-tweet {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+  border-color: #374151 !important;
 }
 </style> 

@@ -141,7 +141,18 @@
                       <span>•</span>
                       <span>{{ preview.provider_name || preview.site_name || '' }}</span>
                     </div>
-                    <div v-if="preview.embed_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    
+                    <!-- Twitter preview dengan EmbedManager -->
+                    <div v-else-if="preview.platform === 'twitter' || form.url?.includes('twitter.com') || form.url?.includes('x.com')" class="twitter-preview-container">
+                      <EmbedManager 
+                        :url="form.url" 
+                        :metaData="preview" 
+                        orientation="portrait"
+                      />
+                    </div>
+                    
+                    <!-- Preview dari embed URL -->
+                    <div v-else-if="preview.embed_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                       <iframe
                         :src="preview.embed_url"
                         class="w-full h-full"
@@ -149,10 +160,16 @@
                         allowfullscreen
                       ></iframe>
                     </div>
+                    
+                    <!-- Preview dari thumbnail -->
                     <div v-else-if="preview.thumbnail_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                      <img :src="preview.thumbnail_url" :alt="preview.title" class="w-full h-full object-cover">
+                      <img :src="getProxyImageUrl(preview.thumbnail_url)" :alt="preview.title" class="w-full h-full object-cover">
                     </div>
-                    <div v-else-if="preview.html" class="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden p-4" v-html="preview.html"></div>
+                    
+                    <!-- Preview dari HTML -->
+                    <div v-else-if="preview.html && preview.platform !== 'twitter'" class="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden p-4" v-html="preview.html"></div>
+                    
+                    <!-- Metadata -->
                     <div v-if="preview.title" class="text-lg font-semibold text-gray-900 dark:text-white">
                       {{ preview.title }}
                     </div>
@@ -211,6 +228,8 @@ import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { ref, watch } from 'vue'
 import axios from 'axios'
+import TwitterEmbed from '@/Components/Embeds/TwitterEmbed.vue'
+import EmbedManager from '@/Components/Embeds/EmbedManager.vue'
 
 const props = defineProps({
   feed: Object
@@ -245,13 +264,39 @@ const fetchPreview = async (url) => {
       return
     }
     
+    console.log('[Edit] Preview response:', response.data);
+    
     preview.value = response.data
     if (form.type === 'social_media') {
       form.meta_data = response.data
       
-      // Jika tidak ada platform, gunakan data yang ada untuk tetap menampilkan preview
-      if (!form.meta_data.platform && form.url.includes('instagram')) {
-        form.meta_data.platform = 'instagram'
+      // Deteksi platform berdasarkan URL jika belum terdeteksi
+      if (!form.meta_data.platform) {
+        if (url.includes('instagram')) {
+          form.meta_data.platform = 'instagram';
+        } else if (url.includes('twitter.com') || url.includes('x.com')) {
+          form.meta_data.platform = 'twitter';
+          console.log('[Edit] Mendeteksi platform Twitter');
+        } else if (url.includes('facebook.com') || url.includes('fb.com')) {
+          form.meta_data.platform = 'facebook';
+        } else if (url.includes('tiktok.com')) {
+          form.meta_data.platform = 'tiktok';
+        }
+      }
+      
+      // Perbaikan khusus untuk Twitter
+      if (form.meta_data.platform === 'twitter' || url.includes('twitter.com') || url.includes('x.com') || 
+          (form.meta_data.html && form.meta_data.html.includes('twitter-tweet'))) {
+        
+        console.log('[Edit] Twitter metadata:', form.meta_data);
+        // Pastikan platform diset ke twitter
+        form.meta_data.platform = 'twitter';
+        
+        // Salin twitter:image ke thumbnail_url jika tidak ada thumbnail
+        if (!form.meta_data.thumbnail_url && form.meta_data.twitter_image) {
+          form.meta_data.thumbnail_url = form.meta_data.twitter_image;
+          console.log('[Edit] Menggunakan twitter_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+        }
       }
     }
   } catch (error) {
@@ -263,6 +308,35 @@ const fetchPreview = async (url) => {
     form.processing = false
   }
 }
+
+// Fungsi untuk menggunakan proxy pada gambar yang bermasalah CORS
+const getProxyImageUrl = (url) => {
+  if (!url) {
+    console.log('[Edit] URL gambar kosong, menggunakan fallback');
+    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+  }
+  
+  // Debug untuk thumbnail Twitter
+  if (url && typeof url === 'string') {
+    console.log('[Edit] URL gambar asli:', url);
+  } else {
+    console.log('[Edit] URL bukan string:', typeof url);
+    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+  }
+  
+  // Cek apakah URL berasal dari domain yang bermasalah dengan CORS
+  if (url.includes('scontent-') || 
+      url.includes('cdninstagram') || 
+      url.includes('fbcdn.net') ||
+      url.includes('twimg.com') ||
+      url.includes('twitter.com') ||
+      url.includes('pbs.twimg')) {
+    console.log('[Edit] Menggunakan proxy untuk thumbnail:', url);
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  
+  return url;
+};
 
 const handleTypeChange = () => {
   if (form.type === 'image') {
@@ -357,4 +431,165 @@ const submit = () => {
     })
   }
 }
-</script> 
+
+// Ekstrak username Twitter dari URL
+const extractUsername = (url) => {
+  if (!url) return null;
+  
+  try {
+    // Format twitter.com/username
+    let matches = url.match(/twitter\.com\/([^\/]+)/i);
+    if (matches && matches[1]) {
+      return matches[1];
+    }
+    
+    // Format x.com/username
+    matches = url.match(/x\.com\/([^\/]+)/i);
+    if (matches && matches[1]) {
+      return matches[1];
+    }
+  } catch (error) {
+    console.error('Error extracting Twitter username:', error);
+  }
+  
+  return null;
+};
+</script>
+
+<style>
+.twitter-preview-overlay {
+  width: 100%;
+  min-height: 200px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.dark .twitter-preview-overlay {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.twitter-embed-wrapper {
+  margin: 0 !important;
+}
+
+/* Style untuk Twitter preview sederhana */
+.twitter-static-preview {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  padding: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.dark .twitter-static-preview {
+  background-color: #15202b;
+  border-color: #38444d;
+  color: #ffffff;
+}
+
+.twitter-preview-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.twitter-icon {
+  width: 24px;
+  height: 24px;
+  color: #1da1f2;
+  margin-right: 0.5rem;
+}
+
+.twitter-preview-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.twitter-preview-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.dark .twitter-preview-name {
+  color: #ffffff;
+}
+
+.twitter-preview-username {
+  font-size: 0.85rem;
+  color: #536471;
+}
+
+.dark .twitter-preview-username {
+  color: #8899a6;
+}
+
+.twitter-preview-content {
+  margin-top: 0.5rem;
+}
+
+.twitter-preview-text {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.twitter-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1da1f2;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+  text-decoration: none;
+}
+
+.twitter-link-button:hover {
+  background-color: #1a91da;
+}
+
+.dark .twitter-link-button {
+  background-color: #1d9bf0;
+}
+
+.dark .twitter-link-button:hover {
+  background-color: #1a8cd8;
+}
+
+.twitter-preview-container {
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  min-height: 350px; /* Minimum height for Twitter embed */
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .twitter-preview-container {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.twitter-preview-container :deep(.embed-manager-wrapper) {
+  width: 100%;
+  height: 100%;
+}
+
+.twitter-preview-container :deep(.twitter-embed-wrapper) {
+  width: 100%;
+  min-height: 350px;
+  margin: 0 !important;
+  border-radius: 0;
+  overflow: hidden;
+}
+</style> 

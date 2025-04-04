@@ -174,6 +174,38 @@
                           </div>
                         </div>
 
+                        <!-- Twitter Preview -->
+                        <div v-else-if="feed.meta_data?.platform === 'twitter'" class="w-full h-full">
+                          <!-- Thumbnail dengan Play Button -->
+                          <div class="relative w-full h-full">
+                            <img v-if="feed.meta_data?.thumbnail_url"
+                                 :src="getProxyImageUrl(feed.meta_data.thumbnail_url)"
+                                 :alt="feed.title || feed.meta_data?.description || 'Twitter post'"
+                                 class="w-full h-full object-cover"
+                                 @error="$event.target.onerror = null; console.error('Twitter thumbnail error:', feed.meta_data?.thumbnail_url)">
+                            <!-- Fallback jika tidak ada thumbnail -->
+                            <div v-else class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center">
+                              <svg class="w-16 h-16 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                              </svg>
+                            </div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                              <div class="w-12 h-12 rounded-full bg-blue-400/70 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                              </div>
+                            </div>
+                            <!-- Platform Badge -->
+                            <div class="absolute bottom-2 right-2 bg-blue-400/90 text-white text-xs px-2 py-1 rounded-md flex items-center space-x-1">
+                              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                              </svg>
+                              <span>Twitter</span>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Threads Preview -->
                         <div v-else-if="feed.meta_data?.platform === 'threads'" class="w-full h-full">
                           <!-- Thumbnail dengan Logo Threads -->
@@ -477,6 +509,28 @@ watch([filteredFeeds, selectedType, selectedPeriod], () => {
 onMounted(() => {
   initMasonry();
   
+  // Debug info untuk Twitter
+  props.feeds.data.forEach(feed => {
+    if (feed.meta_data?.platform === 'twitter') {
+      console.log('[Index] Twitter metadata:', feed.meta_data);
+      console.log('[Index] Twitter feed data:', {
+        id: feed.id,
+        title: feed.title,
+        url: feed.url,
+        thumbnail: feed.meta_data?.thumbnail_url
+      });
+      
+      // Cek jika thumbnail URL ada tapi tidak dirender
+      if (feed.meta_data?.thumbnail_url) {
+        // Buat test image untuk validasi URL
+        const testImg = new Image();
+        testImg.onload = () => console.log('[Index] Thumbnail URL valid:', feed.meta_data.thumbnail_url);
+        testImg.onerror = () => console.error('[Index] Thumbnail URL tidak valid:', feed.meta_data.thumbnail_url);
+        testImg.src = feed.meta_data.thumbnail_url;
+      }
+    }
+  });
+  
   // Load TikTok script
   const loadTikTokScript = () => {
     if (!document.querySelector('script[src*="tiktok.com/embed.js"]')) {
@@ -512,12 +566,26 @@ const getCardAspectClass = (feed) => {
 
 // Fungsi untuk menggunakan proxy pada gambar yang bermasalah CORS
 const getProxyImageUrl = (url) => {
-  if (!url) return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+  if (!url) {
+    console.log('[Index] URL gambar kosong, menggunakan fallback');
+    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+  }
+  
+  // Debug untuk thumbnail Twitter
+  if (url && typeof url === 'string') {
+    console.log('[Index] URL gambar asli:', url);
+  } else {
+    console.log('[Index] URL bukan string:', typeof url);
+    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+  }
   
   // Cek apakah URL berasal dari domain yang bermasalah dengan CORS
   if (url.includes('scontent-') || 
       url.includes('cdninstagram') || 
-      url.includes('fbcdn.net')) {
+      url.includes('fbcdn.net') ||
+      url.includes('twimg.com') ||
+      url.includes('twitter.com') ||
+      url.includes('pbs.twimg')) {
     console.log('[Index] Menggunakan proxy untuk thumbnail:', url);
     return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   }
