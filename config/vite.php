@@ -11,5 +11,5 @@ return [
         'host' => env('VITE_DEV_SERVER_HOST', 'localhost'),
         'port' => env('VITE_DEV_SERVER_PORT', 5173),
     ],
-    'manifest_key' => env('VITE_MANIFEST_KEY', id()),
+    'manifest_key' => env('VITE_MANIFEST_KEY', 'terminal-todo'),
 ]; 

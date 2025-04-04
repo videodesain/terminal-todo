@@ -26,3 +26,73 @@
 .sidebar-icon-inactive {
     @apply text-gray-400 group-hover:text-white;
 }
+
+/* TikTok Embed Container */
+.tiktok-embed-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.tiktok-embed-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.tiktok-embed-container blockquote {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+.tiktok-embed-container iframe {
+  position: relative !important;
+  width: 100% !important;
+  height: 100vh !important;
+  max-height: 80vh !important;
+  min-height: 500px !important;
+  margin: 0 auto !important;
+  border: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tiktok-embed-container iframe {
+    height: 70vh !important;
+    min-height: 400px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .tiktok-embed-container iframe {
+    height: 60vh !important;
+    min-height: 350px !important;
+  }
+}
+
+/* Fix untuk dark mode */
+.dark .tiktok-embed {
+  background-color: transparent !important;
+}
+
+/* Additional fixes for TikTok embed */
+.tiktok-embed {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
