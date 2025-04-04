@@ -143,7 +143,7 @@
                     </div>
                     
                     <!-- Twitter preview dengan EmbedManager -->
-                    <div v-else-if="preview.platform === 'twitter' || form.url?.includes('twitter.com') || form.url?.includes('x.com')" class="twitter-preview-container">
+                    <div v-if="preview.platform === 'twitter' || form.url?.includes('twitter.com') || form.url?.includes('x.com')" class="twitter-preview-container">
                       <EmbedManager 
                         :url="form.url" 
                         :metaData="preview" 

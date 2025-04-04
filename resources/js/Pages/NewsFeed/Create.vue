@@ -168,8 +168,30 @@
                       <span class="text-sm font-medium text-gray-600 dark:text-gray-300 capitalize">{{ preview.platform }}</span>
                     </div>
 
-                    <!-- Embed jika ada (prioritas tertinggi) -->
-                    <div v-if="preview.embed_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <!-- Twitter preview dengan EmbedManager -->
+                    <div v-if="preview.platform === 'twitter'" class="social-media-preview">
+                      <div class="embed-container">
+                        <EmbedManager 
+                          :url="form.url" 
+                          :metaData="preview"
+                          orientation="landscape"
+                        />
+                      </div>
+                      <a 
+                        :href="form.url" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="mt-3 inline-flex items-center px-3 py-1 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-colors duration-200"
+                      >
+                        <span>Lihat di Twitter</span>
+                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                    
+                    <!-- Embed untuk platform lain -->
+                    <div v-else-if="preview.embed_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                       <iframe
                         :src="preview.embed_url"
                         class="w-full h-full"
@@ -180,7 +202,7 @@
                     </div>
                     
                     <!-- HTML embed jika tidak ada embed_url -->
-                    <div v-else-if="preview.html && preview.platform !== 'twitter'" class="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden p-4" v-html="preview.html"></div>
+                    <div v-else-if="preview.html" class="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden p-4" v-html="preview.html"></div>
                     
                     <!-- Thumbnail jika tidak ada embed_url dan html -->
                     <div v-else-if="preview.thumbnail_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
@@ -188,32 +210,6 @@
                            :alt="preview.title" 
                            class="w-full h-full object-cover"
                            @error="handleImageError">
-                    </div>
-                    
-                    <!-- Twitter preview dengan EmbedManager -->
-                    <div v-else-if="preview.platform === 'twitter'" class="twitter-preview-container">
-                      <!-- Fallback image jika EmbedManager tidak bisa memuat -->
-                      <div class="twitter-fallback-preview">
-                        <div class="twitter-preview-header">
-                          <div class="twitter-icon">
-                            <svg class="w-full h-full text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                            </svg>
-                          </div>
-                          <div class="twitter-preview-info">
-                            <div class="twitter-preview-username">@{{ extractUsername(form.url) || 'twitter' }}</div>
-                          </div>
-                        </div>
-                        <div class="twitter-preview-content">
-                          <p class="twitter-preview-text">{{ preview.description || 'Tweet ini akan ditampilkan di halaman feed.' }}</p>
-                          <div v-if="preview.thumbnail_url" class="twitter-preview-image">
-                            <img :src="getProxyImageUrl(preview.thumbnail_url)" @error="handleImageError" class="rounded-lg w-full h-auto" />
-                          </div>
-                          <a :href="form.url" target="_blank" rel="noopener noreferrer" class="twitter-link-button mt-4">
-                            Lihat di Twitter
-                          </a>
-                        </div>
-                      </div>
                     </div>
 
                     <!-- Metadata -->
@@ -346,6 +342,32 @@ const fetchPreview = async (url) => {
         if (!form.meta_data.thumbnail_url && form.meta_data.twitter_image) {
           form.meta_data.thumbnail_url = form.meta_data.twitter_image;
           console.log('[Create] Menggunakan twitter_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+        }
+        
+        // PENTING: Untuk Twitter, kita PERLU mempertahankan HTML untuk EmbedManager
+        // TIDAK menghapus HTML dari Twitter metadata seperti sebelumnya
+        
+        // Ekstrak Tweet ID dari URL jika belum ada
+        if (!form.meta_data.tweet_id) {
+          try {
+            // Format: twitter.com/username/status/id
+            let matches = url.match(/twitter\.com\/[^\/]+\/status\/(\d+)/i);
+            if (matches && matches[1]) {
+              form.meta_data.tweet_id = matches[1];
+              console.log('[Create] Berhasil ekstrak Tweet ID:', form.meta_data.tweet_id);
+            }
+            
+            // Format: x.com/username/status/id
+            if (!form.meta_data.tweet_id) {
+              matches = url.match(/x\.com\/[^\/]+\/status\/(\d+)/i);
+              if (matches && matches[1]) {
+                form.meta_data.tweet_id = matches[1];
+                console.log('[Create] Berhasil ekstrak Tweet ID dari x.com:', form.meta_data.tweet_id);
+              }
+            }
+          } catch (error) {
+            console.error('[Create] Error ekstrak Tweet ID:', error);
+          }
         }
         
         // Test thumbnail URL
@@ -643,5 +665,60 @@ const extractUsername = (url) => {
   margin: 0 !important;
   border-radius: 0;
   overflow: hidden;
+}
+
+/* Styles untuk social media preview */
+.social-media-preview {
+  width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .social-media-preview {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.embed-container {
+  width: 100%;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.embed-container :deep(.embed-manager-wrapper) {
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+.embed-container :deep(.twitter-embed-wrapper) {
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto !important;
+  min-height: 350px;
+  overflow: hidden;
+}
+
+.embed-container :deep(.twitter-embed-container) {
+  width: 100%;
+  min-height: 350px;
+  overflow: hidden;
+}
+
+.embed-container :deep(.twitter-embed-iframe) {
+  width: 100%;
+  min-height: 350px;
+  border: none;
+}
+
+/* Fix untuk tema dark pada embed Twitter */
+.dark .embed-container :deep(.twitter-embed-iframe) {
+  background-color: #1f2937;
+  border: 1px solid #374151;
 }
 </style> 
