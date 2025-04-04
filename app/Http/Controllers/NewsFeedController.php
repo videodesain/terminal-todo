@@ -634,6 +634,89 @@ class NewsFeedController extends Controller
                 }
             }
             
+            // Handle Twitter
+            if ($data['platform'] === 'twitter') {
+                try {
+                    \Log::info('Mengekstrak metadata Twitter untuk URL: ' . $url);
+                    
+                    // Ekstrak Tweet ID dari URL
+                    preg_match('/\/status\/(\d+)/', $url, $matches);
+                    $tweetId = $matches[1] ?? null;
+                    
+                    if ($tweetId) {
+                        \Log::info('Twitter ID ditemukan: ' . $tweetId);
+                        $data['tweet_id'] = $tweetId;
+                    }
+                    
+                    // Cari thumbnail dari berbagai sumber
+                    $possibleImageKeys = [
+                        'image', 'twitter:image', 'twitter:image:src', 'og:image',
+                        'twitter:card:image', 'twitter:player:image'
+                    ];
+                    
+                    // Tambahkan thumbnail yang lebih baik
+                    foreach ($possibleImageKeys as $key) {
+                        $imageUrl = $info->$key;
+                        if ($imageUrl) {
+                            $data['thumbnail_url'] = $imageUrl;
+                            $data['twitter_image'] = $imageUrl; // Simpan sebagai alternatif
+                            \Log::info('Twitter image ditemukan dari key ' . $key . ': ' . $imageUrl);
+                            break;
+                        }
+                    }
+                    
+                    // Jika tidak ada thumbnail, coba cari di HTML
+                    if (empty($data['thumbnail_url']) && $info->code) {
+                        // Cari URL gambar di dalam HTML
+                        preg_match_all('/<img[^>]+src="([^"]+)"[^>]*>/i', $info->code, $matches);
+                        
+                        if (isset($matches[1]) && !empty($matches[1])) {
+                            foreach ($matches[1] as $imgSrc) {
+                                if (strpos($imgSrc, 'twimg.com') !== false || 
+                                    strpos($imgSrc, 'twitter.com') !== false ||
+                                    strpos($imgSrc, 'pbs.twimg') !== false) {
+                                    $data['thumbnail_url'] = $imgSrc;
+                                    $data['twitter_image'] = $imgSrc;
+                                    \Log::info('Twitter image ditemukan dari HTML: ' . $imgSrc);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Coba ambil dari text jika ada URL gambar
+                    if (empty($data['thumbnail_url']) && !empty($info->description)) {
+                        preg_match('/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif))/i', $info->description, $matches);
+                        if (isset($matches[1])) {
+                            $data['thumbnail_url'] = $matches[1];
+                            $data['twitter_image'] = $matches[1];
+                            \Log::info('Twitter image ditemukan dari deskripsi: ' . $matches[1]);
+                        }
+                    }
+                    
+                    // Jika masih kosong, gunakan image default Twitter
+                    if (empty($data['thumbnail_url'])) {
+                        $data['thumbnail_url'] = 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+                        $data['twitter_image'] = 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+                        \Log::info('Menggunakan default Twitter image');
+                    }
+                    
+                    // Ekstrak username dari URL
+                    preg_match('/(twitter\.com|x\.com)\/([^\/]+)/', $url, $matches);
+                    if (isset($matches[2]) && $matches[2] !== 'status') {
+                        $data['author_username'] = $matches[2];
+                        // Jika tidak ada author_name, gunakan username
+                        if (empty($data['author_name'])) {
+                            $data['author_name'] = '@' . $matches[2];
+                        }
+                    }
+                    
+                    \Log::info('Twitter data processed:', $data);
+                } catch (\Exception $e) {
+                    \Log::error('Error processing Twitter data: ' . $e->getMessage());
+                }
+            }
+
             \Log::info('Social media preview data: ', $data);
 
             return response()->json($data);

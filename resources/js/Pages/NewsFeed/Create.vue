@@ -425,45 +425,55 @@ const fetchPreview = async (url) => {
         // Pastikan platform diset ke twitter
         form.meta_data.platform = 'twitter';
         
-        // Salin twitter:image ke thumbnail_url jika tidak ada thumbnail
-        if (!form.meta_data.thumbnail_url && form.meta_data.twitter_image) {
-          form.meta_data.thumbnail_url = form.meta_data.twitter_image;
-          console.log('[Create] Menggunakan twitter_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+        // Cari thumbnail dari berbagai sumber yang mungkin
+        if (!form.meta_data.thumbnail_url) {
+          // Coba ekstrak dari twitter:image
+          if (form.meta_data.twitter_image) {
+            form.meta_data.thumbnail_url = form.meta_data.twitter_image;
+            console.log('[Create] Menggunakan twitter_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+          }
+          // Coba ekstrak dari og:image
+          else if (form.meta_data.og_image) {
+            form.meta_data.thumbnail_url = form.meta_data.og_image;
+            console.log('[Create] Menggunakan og_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+          }
+          // Coba ekstrak dari twitter:player:image
+          else if (form.meta_data.twitter_player_image) {
+            form.meta_data.thumbnail_url = form.meta_data.twitter_player_image;
+            console.log('[Create] Menggunakan twitter_player_image sebagai thumbnail:', form.meta_data.thumbnail_url);
+          }
+          // Coba ekstrak dari HTML jika ada URL gambar
+          else if (form.meta_data.html && typeof form.meta_data.html === 'string') {
+            const imgMatch = form.meta_data.html.match(/<img[^>]+src="([^">]+)"/i);
+            if (imgMatch && imgMatch[1]) {
+              form.meta_data.thumbnail_url = imgMatch[1];
+              console.log('[Create] Ekstrak thumbnail dari HTML:', form.meta_data.thumbnail_url);
+            }
+          }
+        }
+        
+        // Validasi thumbnail URL
+        if (form.meta_data.thumbnail_url) {
+          // Perbaiki URL relatif jika diperlukan
+          if (form.meta_data.thumbnail_url.startsWith('/')) {
+            const urlObj = new URL(url);
+            form.meta_data.thumbnail_url = `${urlObj.protocol}//${urlObj.hostname}${form.meta_data.thumbnail_url}`;
+            console.log('[Create] Fixed relative URL:', form.meta_data.thumbnail_url);
+          }
+          
+          // Test thumbnail URL
+          const testImg = new Image();
+          testImg.onload = () => console.log('[Create] Thumbnail URL valid:', form.meta_data.thumbnail_url);
+          testImg.onerror = () => {
+            console.error('[Create] Thumbnail URL tidak valid:', form.meta_data.thumbnail_url);
+            // Jika Twitter URL tidak valid, coba gunakan default Twitter logo sebagai fallback
+            form.meta_data.thumbnail_url = 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+          };
+          testImg.src = form.meta_data.thumbnail_url;
         }
         
         // PENTING: Untuk Twitter, kita PERLU mempertahankan HTML untuk EmbedManager
         // TIDAK menghapus HTML dari Twitter metadata seperti sebelumnya
-        
-        // Ekstrak Tweet ID dari URL jika belum ada
-        if (!form.meta_data.tweet_id) {
-          try {
-            // Format: twitter.com/username/status/id
-            let matches = url.match(/twitter\.com\/[^\/]+\/status\/(\d+)/i);
-            if (matches && matches[1]) {
-              form.meta_data.tweet_id = matches[1];
-              console.log('[Create] Berhasil ekstrak Tweet ID:', form.meta_data.tweet_id);
-            }
-            
-            // Format: x.com/username/status/id
-            if (!form.meta_data.tweet_id) {
-              matches = url.match(/x\.com\/[^\/]+\/status\/(\d+)/i);
-              if (matches && matches[1]) {
-                form.meta_data.tweet_id = matches[1];
-                console.log('[Create] Berhasil ekstrak Tweet ID dari x.com:', form.meta_data.tweet_id);
-              }
-            }
-          } catch (error) {
-            console.error('[Create] Error ekstrak Tweet ID:', error);
-          }
-        }
-        
-        // Test thumbnail URL
-        if (form.meta_data.thumbnail_url) {
-          const testImg = new Image();
-          testImg.onload = () => console.log('[Create] Thumbnail URL valid:', form.meta_data.thumbnail_url);
-          testImg.onerror = () => console.error('[Create] Thumbnail URL tidak valid:', form.meta_data.thumbnail_url);
-          testImg.src = form.meta_data.thumbnail_url;
-        }
       }
     }
   } catch (error) {
@@ -568,7 +578,7 @@ watch(() => form.url, async (newUrl) => {
 const getProxyImageUrl = (url) => {
   if (!url) {
     console.log('[Create] URL gambar kosong, menggunakan fallback');
-    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+    return 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
   }
   
   // Debug untuk thumbnail Twitter
@@ -576,7 +586,20 @@ const getProxyImageUrl = (url) => {
     console.log('[Create] URL gambar asli:', url);
   } else {
     console.log('[Create] URL bukan string:', typeof url);
-    return 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+    return 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+  }
+  
+  // Perbaiki URL relatif
+  if (url.startsWith('/')) {
+    if (form.url) {
+      try {
+        const urlObj = new URL(form.url);
+        url = `${urlObj.protocol}//${urlObj.hostname}${url}`;
+        console.log('[Create] URL gambar relatif diperbaiki:', url);
+      } catch (e) {
+        console.error('[Create] Error memperbaiki URL relatif:', e);
+      }
+    }
   }
   
   // Cek apakah URL berasal dari domain yang bermasalah dengan CORS

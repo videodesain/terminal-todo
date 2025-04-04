@@ -182,7 +182,13 @@
                                  :src="getProxyImageUrl(feed.meta_data.thumbnail_url)"
                                  :alt="feed.title || feed.meta_data?.description || 'Twitter post'"
                                  class="w-full h-full object-cover"
-                                 @error="$event.target.onerror = null; console.error('Twitter thumbnail error:', feed.meta_data?.thumbnail_url)">
+                                 @error="handleTwitterImageError($event, feed)">
+                            <!-- Fallback Twitter image jika tidak ada thumbnail -->
+                            <img v-else-if="feed.meta_data?.twitter_image"
+                                 :src="getProxyImageUrl(feed.meta_data.twitter_image)"
+                                 :alt="feed.title || feed.meta_data?.description || 'Twitter post'"
+                                 class="w-full h-full object-cover"
+                                 @error="handleTwitterImageError($event, feed)">
                             <!-- Fallback jika tidak ada thumbnail -->
                             <div v-else class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center">
                               <svg class="w-16 h-16 text-white/80" viewBox="0 0 24 24" fill="currentColor">
@@ -591,6 +597,34 @@ const getProxyImageUrl = (url) => {
   }
   
   return url;
+};
+
+const handleTwitterImageError = (event, feed) => {
+  console.error('[Index] Twitter image load error:', event.target.src);
+  
+  // Reset error handler untuk mencegah infinite loop
+  event.target.onerror = null;
+  
+  // Coba URL alternatif jika ada
+  if (feed.meta_data?.twitter_image && event.target.src !== getProxyImageUrl(feed.meta_data.twitter_image)) {
+    console.log('[Index] Mencoba menggunakan twitter_image sebagai fallback');
+    event.target.src = getProxyImageUrl(feed.meta_data.twitter_image);
+    return;
+  }
+  
+  // Cek apakah ada URL gambar yang tersedia di image_url
+  if (feed.image_url && event.target.src !== feed.image_url) {
+    console.log('[Index] Mencoba menggunakan image_url sebagai fallback');
+    event.target.src = feed.image_url;
+    return;
+  }
+  
+  // Fallback terakhir - gunakan gambar default Twitter
+  event.target.src = 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+  
+  // Atur ukuran dan style untuk gambar fallback
+  event.target.classList.remove('object-cover');
+  event.target.classList.add('object-contain', 'p-8');
 };
 </script>
 
