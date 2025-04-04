@@ -283,3 +283,68 @@ Untuk monitoring performa aplikasi, gunakan tool seperti:
 ## License
 
 The Terminal Todo is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+# Sistem Embed Media Sosial
+
+## Komponen Modular untuk Embed Media Sosial
+
+Sistem ini terdiri dari komponen-komponen modular Vue.js yang menangani embed berbagai platform media sosial dengan cara yang lebih terstruktur dan mudah dikelola.
+
+### Struktur Komponen
+
+- **EmbedManager.vue** - Komponen induk yang mendeteksi jenis media sosial dan memilih komponen yang sesuai.
+- **TwitterEmbed.vue** - Menangani embed Twitter/X dengan tiga strategi berbeda (oEmbed API, iframe langsung, dan fallback statis).
+- **YouTubeEmbed.vue** - Menangani YouTube videos dan Shorts.
+- **TikTokEmbed.vue** - Menangani embed TikTok dengan loading script dinamis.
+- **InstagramEmbed.vue** - Menangani embed Instagram posts dan Reels.
+- **FacebookEmbed.vue** - Menangani embed Facebook posts.
+- **DefaultEmbed.vue** - Fallback untuk platform yang tidak memiliki komponen khusus.
+
+### Penggunaan
+
+```vue
+<template>
+  <EmbedManager 
+    :url="url" 
+    :metaData="metaData" 
+  />
+</template>
+
+<script setup>
+import EmbedManager from '@/Components/Embeds/EmbedManager.vue';
+
+// URL dan metadata dari platform sosial media
+const url = 'https://twitter.com/username/status/123456789';
+const metaData = {
+  platform: 'twitter',
+  author_name: 'Username',
+  text: 'Tweet content',
+  // ...metadata lainnya
+};
+</script>
+```
+
+### Fitur
+
+1. **Deteksi Platform Otomatis** - EmbedManager dapat mendeteksi platform berdasarkan URL.
+2. **Multi-strategi Loading** - Setiap komponen memiliki beberapa strategi loading untuk kehandalan.
+3. **Responsive Design** - Semua embed dioptimalkan untuk tampilan berbagai ukuran layar.
+4. **Dark Mode Support** - Mendukung tema terang/gelap secara otomatis.
+5. **Fallback Statis** - Jika embed tidak dapat dimuat, tampilan statis ditampilkan sebagai fallback.
+
+### Strategi Loading
+
+Komponen menggunakan strategi bertingkat:
+
+1. **oEmbed API** (jika tersedia)
+2. **Embed langsung via iframe**
+3. **Tampilan statis fallback**
+
+### Menambahkan Platform Baru
+
+Untuk menambahkan platform baru:
+
+1. Buat komponen baru dalam direktori `resources/js/Components/Embeds/`
+2. Implementasikan logika spesifik untuk platform tersebut
+3. Tambahkan kondisi deteksi ke `EmbedManager.vue`
+4. Daftarkan komponen baru di `EmbedManager.vue`

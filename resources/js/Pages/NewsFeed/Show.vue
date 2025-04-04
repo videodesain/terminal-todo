@@ -165,39 +165,12 @@
                   </a>
                 </div>
 
-                <div class="overflow-hidden">
-                  <!-- Embed Content -->
-                  <div v-if="feed.meta_data?.embed_url || feed.meta_data?.html" class="social-embed-container">
-                    <!-- TikTok specific embed container -->
-                    <div v-if="feed.meta_data?.platform === 'tiktok'" class="w-full relative tiktok-embed-wrapper">
-                      <div 
-                        v-if="feed.meta_data?.html" 
-                        class="tiktok-embed-container w-full"
-                        v-html="feed.meta_data.html"
-                        ref="tiktokContainer"
-                      ></div>
-                    </div>
-                    
-                    <!-- Instagram specific embed container -->
-                    <div v-else-if="feed.meta_data?.platform === 'instagram'" class="instagram-embed-wrapper">
-                      <div 
-                        v-if="feed.meta_data?.html"
-                        v-html="feed.meta_data.html"
-                        class="instagram-embed-container"
-                      ></div>
-                    </div>
-                    
-                    <!-- Other platforms embed -->
-                    <iframe
-                      v-else
-                      :src="feed.meta_data.embed_url"
-                      class="w-full h-full"
-                      :style="{ aspectRatio: getAspectRatio(feed.meta_data.platform) }"
-                      frameborder="0"
-                      :allow="getIframePermissions(feed.meta_data.platform)"
-                      allowfullscreen
-                    ></iframe>
-                  </div>
+                <div class="overflow-hidden p-4">
+                  <!-- Menggunakan EmbedManager untuk semua jenis media sosial -->
+                  <EmbedManager 
+                    :url="feed.url" 
+                    :metaData="feed.meta_data" 
+                  />
                 </div>
               </div>
 
@@ -380,10 +353,11 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import Modal from '@/Components/Modal.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import DangerButton from '@/Components/DangerButton.vue'
+import EmbedManager from '@/Components/Embeds/EmbedManager.vue'
 
 const props = defineProps({
   feed: Object
@@ -480,18 +454,6 @@ onMounted(() => {
       closeLightbox()
     }
   })
-  
-  // Cek apakah ada TikTok embed di halaman
-  const tiktokEmbeds = document.querySelectorAll('.tiktok-embed');
-  if (tiktokEmbeds.length > 0) {
-    // Load script TikTok jika belum ada
-    if (!document.querySelector('script[src="https://www.tiktok.com/embed.js"]')) {
-      const script = document.createElement('script');
-      script.setAttribute('src', 'https://www.tiktok.com/embed.js');
-      script.setAttribute('async', true);
-      document.body.appendChild(script);
-    }
-  }
 })
 
 const getIframePermissions = (platform) => {
@@ -526,123 +488,6 @@ const getAspectRatio = (platform) => {
       return '16:9';
   }
 }
-
-// Tambahkan ref untuk container TikTok
-const tiktokContainer = ref(null);
-const tiktokLoaded = ref(false);
-
-// Modifikasi fungsi loadTikTokScript
-const loadTikTokScript = () => {
-  return new Promise((resolve, reject) => {
-    // Jika widget sudah dimuat, langsung resolve
-    if (window.TikTok && tiktokLoaded.value) {
-      resolve();
-      return;
-    }
-
-    // Hapus script lama jika ada
-    const existingScript = document.querySelector('script[src*="tiktok.com/embed.js"]');
-    if (existingScript) {
-      existingScript.remove();
-    }
-
-    // Buat script baru
-    const script = document.createElement('script');
-    script.src = 'https://www.tiktok.com/embed.js';
-    script.async = true;
-
-    // Handler untuk sukses
-    script.onload = () => {
-      let attempts = 0;
-      const maxAttempts = 50; // Meningkatkan jumlah attempts
-      
-      const checkTikTok = setInterval(() => {
-        attempts++;
-        if (window.TikTok) {
-          clearInterval(checkTikTok);
-          tiktokLoaded.value = true;
-          resolve();
-        } else if (attempts >= maxAttempts) {
-          clearInterval(checkTikTok);
-          // Tidak perlu reject, biarkan tetap resolve
-          console.warn('TikTok widget load delayed, continuing anyway');
-          resolve();
-        }
-      }, 200); // Meningkatkan interval
-    };
-
-    // Handler untuk error
-    script.onerror = () => {
-      console.warn('TikTok script failed to load, continuing anyway');
-      resolve(); // Tetap resolve meskipun error
-    };
-
-    // Tambahkan script ke document
-    document.body.appendChild(script);
-  });
-};
-
-// Modifikasi fungsi reloadTikTokEmbed
-const reloadTikTokEmbed = () => {
-  if (window.TikTok) {
-    try {
-      window.TikTok.reloadEmbeds();
-    } catch (error) {
-      console.warn('Error reloading TikTok embeds:', error);
-    }
-  }
-};
-
-// Modifikasi onMounted
-onMounted(async () => {
-  // Event listener untuk lightbox
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && showLightbox.value) {
-      closeLightbox();
-    }
-  });
-
-  // Khusus untuk TikTok embed
-  if (props.feed.type === 'social_media' && props.feed.meta_data?.platform === 'tiktok') {
-    try {
-      await loadTikTokScript();
-      
-      // Setup MutationObserver untuk memantau perubahan
-      const observer = new MutationObserver(() => {
-        reloadTikTokEmbed();
-      });
-
-      if (tiktokContainer.value) {
-        observer.observe(tiktokContainer.value, {
-          childList: true,
-          subtree: true,
-          attributes: true
-        });
-
-        // Multiple reload attempts dengan interval
-        const reloadAttempts = [0, 1000, 2000, 3000]; // Reload pada 0ms, 1s, 2s, dan 3s
-        reloadAttempts.forEach(delay => {
-          setTimeout(reloadTikTokEmbed, delay);
-        });
-      }
-
-      // Cleanup
-      onUnmounted(() => {
-        observer.disconnect();
-      });
-    } catch (error) {
-      console.warn('Initial TikTok load failed, attempting reload:', error);
-      // Tidak perlu retry, karena kita sudah punya multiple reload attempts
-    }
-  }
-});
-
-// Watch untuk meta_data changes
-watch(() => props.feed.meta_data, () => {
-  if (props.feed.type === 'social_media' && props.feed.meta_data?.platform === 'tiktok') {
-    setTimeout(reloadTikTokEmbed, 1000);
-  }
-}, { deep: true });
 </script>
 
 <style>
@@ -679,17 +524,48 @@ watch(() => props.feed.meta_data, () => {
   height: auto !important;
 }
 
+/* Styling untuk wrapper Twitter */
+.twitter-embed-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 550px !important;
+  margin: 0 auto !important;
+  height: auto !important;
+}
+
+.twitter-embed-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.twitter-embed-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  border: none;
+}
+
+/* Beberapa override style untuk dark mode */
+.dark .twitter-embed-iframe {
+  background-color: transparent !important;
+}
+
 /* Menghilangkan scrollbar untuk semua browser */
 .tiktok-embed-wrapper,
 .instagram-embed-wrapper,
-.tiktok-embed-container {
+.tiktok-embed-container,
+.twitter-embed-wrapper,
+.twitter-embed-container {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;     /* Firefox */
 }
 
 .tiktok-embed-wrapper::-webkit-scrollbar,
 .instagram-embed-wrapper::-webkit-scrollbar,
-.tiktok-embed-container::-webkit-scrollbar {
+.tiktok-embed-container::-webkit-scrollbar,
+.twitter-embed-wrapper::-webkit-scrollbar,
+.twitter-embed-container::-webkit-scrollbar {
   display: none !important;             /* Chrome, Safari and Opera */
 }
 

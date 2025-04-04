@@ -1,0 +1,231 @@
+<!-- EmbedManager.vue - Komponen utama untuk mengelola semua jenis embed sosial media -->
+<template>
+  <div class="embed-manager-wrapper">
+    <!-- Twitter Embed -->
+    <TwitterEmbed
+      v-if="platform === 'twitter' || platform === 'x'"
+      :url="url"
+      :tweetId="embedDetails.id"
+      :metaData="metaData"
+    />
+    
+    <!-- YouTube Embed -->
+    <YouTubeEmbed
+      v-else-if="platform === 'youtube' || platform === 'youtubeShorts'"
+      :url="url"
+      :videoId="embedDetails.id"
+      :embedUrl="embedDetails.embedUrl"
+      :platform="platform"
+    />
+    
+    <!-- TikTok Embed -->
+    <TikTokEmbed
+      v-else-if="platform === 'tiktok'"
+      :url="url"
+      :videoId="embedDetails.id"
+      :html="embedDetails.html"
+    />
+    
+    <!-- Instagram Embed -->
+    <InstagramEmbed
+      v-else-if="platform === 'instagram'"
+      :url="url"
+      :html="embedDetails.html"
+      :embedUrl="embedDetails.embedUrl"
+    />
+    
+    <!-- Facebook Embed -->
+    <FacebookEmbed
+      v-else-if="platform === 'facebook'"
+      :url="url"
+      :embedUrl="embedDetails.embedUrl"
+    />
+    
+    <!-- Default Embed sebagai fallback -->
+    <DefaultEmbed
+      v-else
+      :url="url"
+      :embedUrl="embedDetails.embedUrl"
+      :platform="platform"
+    />
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted, ref } from 'vue';
+import TwitterEmbed from './TwitterEmbed.vue';
+import YouTubeEmbed from './YouTubeEmbed.vue';
+import TikTokEmbed from './TikTokEmbed.vue';
+import InstagramEmbed from './InstagramEmbed.vue';
+import FacebookEmbed from './FacebookEmbed.vue';
+import DefaultEmbed from './DefaultEmbed.vue';
+
+const props = defineProps({
+  // URL asli dari embed
+  url: {
+    type: String,
+    required: true
+  },
+  // Metadata tambahan untuk embed
+  metaData: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
+// Data tambahan tentang embed
+const embedDetails = ref({
+  id: null,
+  embedUrl: null,
+  html: null
+});
+
+// Deteksi platform berdasarkan URL
+const platform = computed(() => {
+  const url = props.url;
+  
+  // Terkadang URL dimulai dengan @ - hapus jika ada
+  const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+  
+  // Twitter / X
+  if (cleanUrl.includes('twitter.com') || cleanUrl.includes('x.com') || 
+      cleanUrl.includes('publish.twitter.com')) {
+    return 'twitter';
+  }
+  
+  // YouTube
+  if (cleanUrl.includes('youtube.com') || cleanUrl.includes('youtu.be')) {
+    // Cek apakah ini YouTube Shorts
+    if (cleanUrl.includes('/shorts/')) {
+      return 'youtubeShorts';
+    }
+    return 'youtube';
+  }
+  
+  // TikTok
+  if (cleanUrl.includes('tiktok.com')) {
+    return 'tiktok';
+  }
+  
+  // Instagram
+  if (cleanUrl.includes('instagram.com')) {
+    return 'instagram';
+  }
+  
+  // Facebook
+  if (cleanUrl.includes('facebook.com') || cleanUrl.includes('fb.com') || 
+      cleanUrl.includes('fb.watch')) {
+    return 'facebook';
+  }
+  
+  // Deteksi platform lainnya
+  // ...
+  
+  // Default jika tidak ada yang cocok
+  return 'unknown';
+});
+
+// Extract ID dan URL berdasarkan platform
+const extractDetailsFromUrl = () => {
+  const url = props.url;
+  const platformType = platform.value;
+  
+  switch (platformType) {
+    case 'twitter':
+      // Id akan diekstrak di dalam komponen TwitterEmbed
+      break;
+      
+    case 'youtube':
+      // Format YouTube standar: youtube.com/watch?v=VIDEO_ID
+      try {
+        const videoId = new URL(url).searchParams.get('v');
+        if (videoId) {
+          embedDetails.value.id = videoId;
+          embedDetails.value.embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+        }
+      } catch (error) {
+        // Format alternatif: youtu.be/VIDEO_ID
+        const matches = url.match(/youtu\.be\/([^?&]+)/);
+        if (matches && matches[1]) {
+          embedDetails.value.id = matches[1];
+          embedDetails.value.embedUrl = `https://www.youtube.com/embed/${matches[1]}?rel=0&modestbranding=1`;
+        }
+      }
+      break;
+      
+    case 'youtubeShorts':
+      // Format: youtube.com/shorts/VIDEO_ID
+      const shortsMatches = url.match(/\/shorts\/([^?&]+)/);
+      if (shortsMatches && shortsMatches[1]) {
+        embedDetails.value.id = shortsMatches[1];
+        embedDetails.value.embedUrl = `https://www.youtube.com/embed/${shortsMatches[1]}?rel=0&modestbranding=1`;
+      }
+      break;
+      
+    case 'tiktok':
+      // Format: tiktok.com/@username/video/VIDEO_ID
+      const tiktokMatches = url.match(/\/video\/(\d+)/);
+      if (tiktokMatches && tiktokMatches[1]) {
+        embedDetails.value.id = tiktokMatches[1];
+      }
+      break;
+      
+    case 'instagram':
+      // Format: instagram.com/p/CODE/ atau instagram.com/reel/CODE/
+      const instaMatches = url.match(/instagram\.com\/(p|reel|tv)\/([^/?]+)/);
+      if (instaMatches && instaMatches[2]) {
+        const code = instaMatches[2];
+        embedDetails.value.id = code;
+        embedDetails.value.embedUrl = `https://www.instagram.com/${instaMatches[1]}/${code}/embed/`;
+      }
+      break;
+      
+    case 'facebook':
+      // Untuk Facebook kita akan menggunakan langsung URL untuk iframe
+      // Format: facebook.com/plugins/post.php?href=URL_ENCODED_POST_URL
+      try {
+        const fbUrl = new URL(url);
+        if (fbUrl.pathname.includes('/plugins/')) {
+          // URL embed sudah diberikan
+          embedDetails.value.embedUrl = url;
+        } else {
+          // URL konten langsung, perlu dikonversi ke URL embed
+          const encodedUrl = encodeURIComponent(url);
+          embedDetails.value.embedUrl = `https://www.facebook.com/plugins/post.php?href=${encodedUrl}&show_text=true&width=500`;
+        }
+      } catch (error) {
+        console.error('Error parsing Facebook URL:', error);
+      }
+      break;
+      
+    // Tambahkan case lain untuk platform yang didukung
+      
+    default:
+      // Untuk platform yang tidak didukung, gunakan URL asli
+      embedDetails.value.embedUrl = url;
+      break;
+  }
+  
+  // Cek apakah meta_data memiliki info HTML
+  if (props.metaData && props.metaData.html) {
+    embedDetails.value.html = props.metaData.html;
+  }
+  
+  // Gunakan ID dari meta_data jika tersedia
+  if (props.metaData && props.metaData.id) {
+    embedDetails.value.id = props.metaData.id;
+  }
+};
+
+// Setup pada mount
+onMounted(() => {
+  extractDetailsFromUrl();
+});
+</script>
+
+<style scoped>
+.embed-manager-wrapper {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+</style> 
