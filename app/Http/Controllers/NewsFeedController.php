@@ -501,6 +501,13 @@ class NewsFeedController extends Controller
                 'original_title' => $info->title ? substr($info->title, 0, 250) : null, // Simpan judul asli
             ];
 
+            // Tambahkan warning khusus untuk facebook_share
+            if ($platform === 'facebook_share') {
+                $data['platform'] = 'facebook'; // Tetap gunakan platform facebook
+                $data['share_format'] = true; // Tambahkan flag khusus
+                $data['warning'] = 'Format URL share Facebook ini mungkin tidak dapat ditampilkan melalui embed.';
+            }
+
             // Extract embed URL from HTML
             if ($info->code) {
                 preg_match('/src=["\']([^"\']+)["\']/', $info->code, $matches);
@@ -614,7 +621,13 @@ class NewsFeedController extends Controller
         $path = $urlParts['path'] ?? '';
 
         if (str_contains($host, 'instagram.com')) return 'instagram';
-        if (str_contains($host, 'facebook.com')) return 'facebook';
+        if (str_contains($host, 'facebook.com')) {
+            // Deteksi format URL share Facebook
+            if (str_contains($path, '/share/p/')) {
+                return 'facebook_share';
+            }
+            return 'facebook';
+        }
         if (str_contains($host, 'twitter.com') || str_contains($host, 'x.com')) return 'twitter';
         if (str_contains($host, 'tiktok.com')) return 'tiktok';
         if (str_contains($host, 'youtube.com') && str_contains($path, '/shorts/')) return 'youtube_shorts';

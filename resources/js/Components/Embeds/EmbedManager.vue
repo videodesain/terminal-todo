@@ -142,6 +142,22 @@ const extractDetailsFromUrl = () => {
   const url = props.url;
   const platformType = platform.value;
   
+  console.log(`[EmbedManager] Memproses URL: ${url}`);
+  
+  // Reset data
+  embedDetails.value = {
+    id: null,
+    embedUrl: null,
+    html: null
+  };
+  
+  // Jika metaData sudah mencakup embedUrl, gunakan itu
+  if (props.metaData && props.metaData.embed_url) {
+    embedDetails.value.embedUrl = props.metaData.embed_url;
+    console.log(`[EmbedManager] Menggunakan embedUrl dari metaData: ${embedDetails.value.embedUrl}`);
+  }
+  
+  // Ekstrak informasi berdasarkan platform
   switch (platformType) {
     case 'twitter':
       // Id akan diekstrak di dalam komponen TwitterEmbed
@@ -239,13 +255,20 @@ const extractDetailsFromUrl = () => {
       // Format: facebook.com/plugins/post.php?href=URL_ENCODED_POST_URL
       try {
         const fbUrl = new URL(url);
-        if (fbUrl.pathname.includes('/plugins/')) {
+        
+        // Deteksi format URL /share/ baru - tidak gunakan untuk embed
+        if (url.includes('/share/p/')) {
+          console.log(`[EmbedManager] Terdeteksi format URL share Facebook, tidak bisa di-embed langsung`);
+          // Jangan set embedUrl untuk format ini, biarkan komponen FacebookEmbed menanganinya
+          embedDetails.value.embedUrl = null;
+        }
+        else if (fbUrl.pathname.includes('/plugins/')) {
           // URL embed sudah diberikan
           embedDetails.value.embedUrl = url;
         } else {
           // URL konten langsung, perlu dikonversi ke URL embed
           const encodedUrl = encodeURIComponent(url);
-          embedDetails.value.embedUrl = `https://www.facebook.com/plugins/post.php?href=${encodedUrl}&show_text=true&width=500`;
+          embedDetails.value.embedUrl = `https://www.facebook.com/plugins/post.php?href=${encodedUrl}&show_text=true&width=500&appId=966242223397117`;
         }
       } catch (error) {
         console.error('Error parsing Facebook URL:', error);
