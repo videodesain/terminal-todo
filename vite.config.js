@@ -9,6 +9,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            buildDirectory: 'build'
         }),
         vue({
             template: {
@@ -33,26 +34,13 @@ export default defineConfig({
     build: {
         outDir: 'public/build',
         assetsDir: '',
-        manifest: true,
+        manifest: 'manifest.json',
         rollupOptions: {
-            input: {
-                app: 'resources/js/app.js',
-                style: 'resources/css/app.css'
-            },
-            output: {
-                manualChunks: {
-                    vendor: ['vue', '@inertiajs/vue3', 'axios']
-                },
-                assetFileNames: (assetInfo) => {
-                    if (assetInfo.name.endsWith('.css')) {
-                        return 'css/[name][extname]';
-                    }
-                    return 'assets/[name]-[hash][extname]';
-                },
-                chunkFileNames: 'js/[name]-[hash].js',
-                entryFileNames: 'js/[name]-[hash].js'
-            }
-        }
+            input: ['resources/css/app.css', 'resources/js/app.js']
+        },
+        write: true,
+        chunkSizeWarningLimit: 1000,
+        emptyOutDir: true
     },
     resolve: {
         alias: {
@@ -65,8 +53,7 @@ export default defineConfig({
             '@meforma/vue-toaster',
             'axios',
             'vue'
-        ],
-        exclude: ['ziggy-js']
+        ]
     },
     server: {
         port: 5175,

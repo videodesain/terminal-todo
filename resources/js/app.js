@@ -6,6 +6,7 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import axios from 'axios';
 import Toaster from "@meforma/vue-toaster";
+import { ZiggyVue } from '../../vendor/tightenco/ziggy/dist/vue.m';
 
 // Setup Axios CSRF token
 axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
