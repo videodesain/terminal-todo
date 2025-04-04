@@ -165,12 +165,16 @@
                   </a>
                 </div>
 
-                <div class="overflow-hidden p-4">
-                  <!-- Menggunakan EmbedManager untuk semua jenis media sosial -->
-                  <EmbedManager 
-                    :url="feed.url" 
-                    :metaData="feed.meta_data" 
-                  />
+                <!-- Container untuk Embed dengan ukuran portrait -->
+                <div class="overflow-hidden p-4 flex justify-center">
+                  <div class="social-media-container-portrait">
+                    <!-- Menggunakan EmbedManager untuk semua jenis media sosial -->
+                    <EmbedManager 
+                      :url="feed.url" 
+                      :metaData="feed.meta_data" 
+                      orientation="portrait"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -459,4 +463,92 @@ onMounted(() => {
 
 <style>
 /* Styling untuk embed disediakan oleh komponen-komponen EmbedManager */
+.social-media-container-portrait {
+  width: 100%;
+  max-width: 500px; /* Lebar maksimum container */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Memastikan tampilan portrait untuk setiap platform */
+.social-media-container-portrait :deep(.twitter-embed-wrapper),
+.social-media-container-portrait :deep(.instagram-embed-wrapper),
+.social-media-container-portrait :deep(.facebook-embed-wrapper),
+.social-media-container-portrait :deep(.tiktok-embed-wrapper),
+.social-media-container-portrait :deep(.youtube-embed-wrapper),
+.social-media-container-portrait :deep(.default-embed-wrapper) {
+  width: 100% !important;
+  min-height: 600px !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Khusus untuk Twitter */
+.social-media-container-portrait :deep(.twitter-embed-iframe) {
+  min-height: 600px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: none !important;
+}
+
+/* Khusus untuk TikTok */
+.social-media-container-portrait :deep(.tiktok-embed-container) {
+  min-height: 750px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Khusus untuk Instagram */
+.social-media-container-portrait :deep(.instagram-embed-iframe) {
+  min-height: 750px !important;
+  width: 100% !important;
+  background-color: white;
+}
+
+/* Khusus untuk Facebook */
+.social-media-container-portrait :deep(.facebook-embed-container) {
+  min-height: 750px !important;
+  width: 100% !important;
+}
+
+/* Khusus untuk YouTube */
+.social-media-container-portrait :deep(.youtube-embed-iframe) {
+  min-height: 500px !important;
+  aspect-ratio: 9/16 !important; /* Portrait mode untuk YouTube */
+  width: 100% !important;
+}
+
+/* Khusus untuk YouTube Shorts */
+.social-media-container-portrait :deep(.youtube-shorts-iframe) {
+  min-height: 650px !important;
+  aspect-ratio: 9/16 !important;
+  width: 100% !important;
+  max-width: 360px !important; /* Shorts biasanya lebih sempit */
+  margin: 0 auto !important;
+}
+
+/* Style untuk dark mode */
+.dark .social-media-container-portrait :deep(.instagram-embed-iframe),
+.dark .social-media-container-portrait :deep(.twitter-embed-iframe),
+.dark .social-media-container-portrait :deep(.facebook-embed-iframe) {
+  background-color: #1f2937 !important;
+  border: 1px solid #374151 !important;
+}
+
+/* Media query untuk layar kecil */
+@media (max-width: 640px) {
+  .social-media-container-portrait {
+    max-width: 100%;
+  }
+  
+  .social-media-container-portrait :deep(.youtube-shorts-iframe) {
+    max-width: 100% !important;
+  }
+}
 </style> 

@@ -1,12 +1,13 @@
 <!-- EmbedManager.vue - Komponen utama untuk mengelola semua jenis embed sosial media -->
 <template>
-  <div class="embed-manager-wrapper">
+  <div class="embed-manager-wrapper" :class="{ 'portrait-mode': orientation === 'portrait' }">
     <!-- Twitter Embed -->
     <TwitterEmbed
       v-if="platform === 'twitter' || platform === 'x'"
       :url="url"
       :tweetId="embedDetails.id"
       :metaData="metaData"
+      :orientation="orientation"
     />
     
     <!-- YouTube Embed -->
@@ -16,6 +17,7 @@
       :videoId="embedDetails.id"
       :embedUrl="embedDetails.embedUrl"
       :platform="platform"
+      :orientation="orientation"
     />
     
     <!-- TikTok Embed -->
@@ -24,6 +26,7 @@
       :url="url"
       :videoId="embedDetails.id"
       :html="embedDetails.html"
+      :orientation="orientation"
     />
     
     <!-- Instagram Embed -->
@@ -32,6 +35,7 @@
       :url="url"
       :html="embedDetails.html"
       :embedUrl="embedDetails.embedUrl"
+      :orientation="orientation"
     />
     
     <!-- Facebook Embed -->
@@ -39,6 +43,7 @@
       v-else-if="platform === 'facebook'"
       :url="url"
       :embedUrl="embedDetails.embedUrl"
+      :orientation="orientation"
     />
     
     <!-- Default Embed sebagai fallback -->
@@ -47,6 +52,7 @@
       :url="url"
       :embedUrl="embedDetails.embedUrl"
       :platform="platform"
+      :orientation="orientation"
     />
   </div>
 </template>
@@ -70,6 +76,12 @@ const props = defineProps({
   metaData: {
     type: Object,
     default: () => ({})
+  },
+  // Orientasi tampilan (portrait/landscape)
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
@@ -141,6 +153,8 @@ const extractDetailsFromUrl = () => {
         const videoId = new URL(url).searchParams.get('v');
         if (videoId) {
           embedDetails.value.id = videoId;
+          // Tambahkan parameter untuk tampilan lebih baik
+          const aspectRatio = props.orientation === 'portrait' ? '9:16' : '16:9';
           embedDetails.value.embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
         }
       } catch (error) {
@@ -227,5 +241,18 @@ onMounted(() => {
 .embed-manager-wrapper {
   width: 100%;
   margin: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.portrait-mode {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .portrait-mode {
+    max-width: 100%;
+  }
 }
 </style> 

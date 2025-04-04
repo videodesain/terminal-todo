@@ -1,6 +1,6 @@
 <!-- InstagramEmbed.vue - Komponen khusus untuk embed Instagram -->
 <template>
-  <div class="instagram-embed-wrapper">
+  <div class="instagram-embed-wrapper" :class="{ 'portrait-mode': orientation === 'portrait' }">
     <!-- Loading State -->
     <div v-if="loading" class="instagram-embed-loading">
       <div class="loading-spinner"></div>
@@ -68,6 +68,11 @@ const props = defineProps({
   embedUrl: {
     type: String,
     default: null
+  },
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
@@ -188,26 +193,35 @@ onMounted(async () => {
 .instagram-embed-wrapper {
   position: relative;
   width: 100%;
-  max-width: 540px !important;
-  margin: 0 auto !important;
-  min-height: 500px;
+  max-width: 550px;
+  margin: 0 auto;
+  min-height: 200px;
+  border-radius: 0.75rem;
   overflow: hidden;
-  background-color: white;
-  border-radius: 4px;
+}
+
+.instagram-embed-wrapper.portrait-mode {
+  max-width: 400px;
+  min-height: 750px;
 }
 
 .instagram-embed-container {
-  position: relative;
   width: 100%;
   height: 100%;
-  min-height: 500px;
-  overflow: hidden;
+  min-height: 450px;
+  background-color: white;
 }
 
 .instagram-embed-iframe {
   width: 100%;
-  min-height: 500px;
+  height: 100%;
+  min-height: 450px;
   border: none;
+}
+
+.portrait-mode .instagram-embed-iframe,
+.portrait-mode .instagram-embed-container {
+  min-height: 750px;
 }
 
 .instagram-embed-loading {

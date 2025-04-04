@@ -1,6 +1,6 @@
 <!-- FacebookEmbed.vue - Komponen khusus untuk embed Facebook -->
 <template>
-  <div class="facebook-embed-wrapper">
+  <div class="facebook-embed-wrapper" :class="{ 'portrait-mode': orientation === 'portrait' }">
     <!-- Loading State -->
     <div v-if="loading" class="facebook-embed-loading">
       <div class="loading-spinner"></div>
@@ -20,13 +20,14 @@
     <!-- Facebook embed container -->
     <div v-else ref="facebookContainer" class="facebook-embed-container">
       <!-- Menggunakan FB SDK -->
-      <div v-if="!embedUrl" class="fb-post" :data-href="url" data-width="500"></div>
+      <div v-if="!embedUrl" class="fb-post" :data-href="url" :data-width="orientation === 'portrait' ? '350' : '500'"></div>
       
       <!-- Fallback ke iframe jika tersedia embeddedUrl -->
       <iframe 
         v-else-if="embedUrl"
         :src="embedUrl"
         class="facebook-embed-iframe"
+        :class="{ 'portrait-iframe': orientation === 'portrait' }"
         frameborder="0"
         scrolling="no"
         allowtransparency="true"
@@ -63,6 +64,11 @@ const props = defineProps({
   embedUrl: {
     type: String,
     default: null
+  },
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
@@ -198,32 +204,44 @@ onUnmounted(() => {
   width: 100%;
   max-width: 550px;
   margin: 0 auto;
-  min-height: 300px;
-  border-radius: 0.375rem;
+  min-height: 200px;
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
+.facebook-embed-wrapper.portrait-mode {
+  max-width: 400px;
+  min-height: 650px;
+}
+
 .facebook-embed-container {
-  position: relative;
   width: 100%;
   height: 100%;
-  min-height: 300px;
-  background-color: white;
+  min-height: 200px;
 }
 
 .facebook-embed-iframe {
   width: 100%;
-  min-height: 300px;
+  height: 100%;
+  min-height: 450px;
   border: none;
+}
+
+.facebook-embed-iframe.portrait-iframe {
+  min-height: 750px;
+}
+
+.portrait-mode .facebook-embed-container {
+  min-height: 650px;
 }
 
 .facebook-embed-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 300px;
+  height: 200px;
   width: 100%;
-  background-color: #f0f2f5;
+  background-color: #f9fafb;
 }
 
 .loading-spinner {
@@ -245,9 +263,9 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 300px;
+  height: 200px;
   width: 100%;
-  background-color: #f0f2f5;
+  background-color: #f9fafb;
   color: #4b5563;
   text-align: center;
   padding: 1rem;
@@ -258,37 +276,38 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   background-color: #1877f2;
   color: white;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
   font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .reload-button:hover {
-  background-color: #166fe5;
+  background-color: #166bda;
 }
 
 .facebook-link {
-  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.75rem;
   padding: 0.5rem 1rem;
   background-color: #1877f2;
   color: white;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
   font-size: 0.875rem;
   text-decoration: none;
   transition: background-color 0.2s;
-  display: inline-block;
 }
 
 .facebook-link:hover {
-  background-color: #166fe5;
+  background-color: #166bda;
 }
 
-/* Dark mode adjustment */
+/* Dark mode */
 :deep(.dark) .facebook-embed-loading,
 :deep(.dark) .facebook-embed-error {
-  background-color: #1e293b;
-  color: #94a3b8;
+  background-color: #1f2937;
+  color: #9ca3af;
 }
 
 :deep(.dark) .loading-spinner {

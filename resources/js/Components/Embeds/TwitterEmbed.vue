@@ -91,6 +91,11 @@ const props = defineProps({
   metaData: {
     type: Object,
     default: () => ({})
+  },
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
@@ -212,7 +217,7 @@ const useOEmbedStrategy = async (tweetId) => {
     const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     
     // Construct oEmbed URL
-    const oembedUrl = `https://publish.twitter.com/oembed?url=https://twitter.com/i/web/status/${tweetId}&omit_script=true&align=center&dnt=true&theme=${currentTheme}&lang=id`;
+    const oembedUrl = `https://publish.twitter.com/oembed?url=https://twitter.com/i/web/status/${tweetId}&omit_script=true&align=center&dnt=true&theme=${currentTheme}&lang=id&maxheight=${props.orientation === 'portrait' ? '700' : '400'}`;
     
     // Fetch data dari oEmbed API
     const response = await fetch(oembedUrl);
@@ -243,14 +248,14 @@ const useIframeStrategy = (tweetId) => {
     
     // Set HTML untuk iframe
     embedHtml.value = `
-      <div class="twitter-embed-iframe-container">
+      <div class="twitter-embed-iframe-container ${props.orientation === 'portrait' ? 'portrait' : 'landscape'}">
         <iframe
           src="https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=${currentTheme}&lang=id"
           frameborder="0"
           scrolling="no"
           allowtransparency="true"
           allowfullscreen="true"
-          class="twitter-embed-iframe"
+          class="twitter-embed-iframe ${props.orientation === 'portrait' ? 'twitter-embed-iframe-portrait' : ''}"
         ></iframe>
       </div>
     `;
@@ -462,11 +467,20 @@ onMounted(async () => {
   height: 100%;
 }
 
+.twitter-embed-iframe-container.portrait {
+  min-height: 650px;
+}
+
 .twitter-embed-iframe {
   width: 100%;
   height: 100%;
   min-height: 400px;
   border: none;
+}
+
+.twitter-embed-iframe-portrait {
+  min-height: 650px !important;
+  height: 100%;
 }
 
 /* static embed */

@@ -1,6 +1,6 @@
 <!-- TikTokEmbed.vue - Komponen khusus untuk embed TikTok -->
 <template>
-  <div class="tiktok-embed-wrapper">
+  <div class="tiktok-embed-wrapper" :class="{ 'portrait-mode': orientation === 'portrait' }">
     <!-- Loading State -->
     <div v-if="loading" class="tiktok-embed-loading">
       <div class="loading-spinner"></div>
@@ -42,6 +42,11 @@ const props = defineProps({
   html: {
     type: String,
     default: null
+  },
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
@@ -198,9 +203,15 @@ onMounted(async () => {
 .tiktok-embed-wrapper {
   position: relative;
   width: 100%;
-  max-width: 605px !important;
-  margin: 0 auto !important;
-  height: auto !important;
+  max-width: 550px;
+  margin: 0 auto;
+  min-height: 200px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.tiktok-embed-wrapper.portrait-mode {
+  max-width: 340px;
   min-height: 750px;
 }
 

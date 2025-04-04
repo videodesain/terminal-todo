@@ -2,22 +2,31 @@
 <template>
   <div 
     class="youtube-embed-wrapper"
-    :class="{ 'youtube-shorts-wrapper': isShorts }"
+    :class="{ 
+      'youtube-shorts-wrapper': isShorts,
+      'portrait-mode': orientation === 'portrait' || isShorts
+    }"
   >
     <iframe
       v-if="embedUrl"
       :src="embedUrl"
       class="youtube-embed-iframe"
-      :class="{ 'youtube-shorts-iframe': isShorts }"
+      :class="{ 
+        'youtube-shorts-iframe': isShorts,
+        'youtube-portrait-iframe': orientation === 'portrait' && !isShorts
+      }"
       frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowfullscreen
     ></iframe>
-    <div v-else-if="videoId" class="youtube-embed-iframe">
+    <div v-else-if="videoId" class="youtube-embed-container">
       <iframe
         :src="`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`"
         class="youtube-embed-iframe"
-        :class="{ 'youtube-shorts-iframe': isShorts }"
+        :class="{ 
+          'youtube-shorts-iframe': isShorts,
+          'youtube-portrait-iframe': orientation === 'portrait' && !isShorts
+        }"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen
@@ -49,12 +58,17 @@ const props = defineProps({
   platform: {
     type: String,
     default: 'youtube'
+  },
+  orientation: {
+    type: String,
+    default: 'landscape',
+    validator: (value) => ['landscape', 'portrait'].includes(value)
   }
 });
 
-// Checked apakah video ini adalah YouTube Shorts
+// Mendeteksi apakah video adalah YouTube Shorts
 const isShorts = computed(() => {
-  return props.platform === 'youtube_shorts' || props.url?.includes('/shorts/');
+  return props.platform === 'youtubeShorts' || props.url.includes('/shorts/');
 });
 </script>
 
@@ -62,31 +76,44 @@ const isShorts = computed(() => {
 .youtube-embed-wrapper {
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: 550px;
   margin: 0 auto;
-  aspect-ratio: 16/9;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   overflow: hidden;
+  background-color: #000;
 }
 
-.youtube-shorts-wrapper {
+.youtube-embed-wrapper.portrait-mode {
   max-width: 400px;
-  aspect-ratio: 9/16;
+}
+
+.youtube-embed-wrapper.youtube-shorts-wrapper {
+  max-width: 340px;
 }
 
 .youtube-embed-iframe {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 16/9;
   border: none;
 }
 
+.youtube-embed-iframe.youtube-portrait-iframe {
+  aspect-ratio: 9/16;
+  min-height: 650px;
+}
+
+.youtube-embed-iframe.youtube-shorts-iframe {
+  aspect-ratio: 9/16;
+  min-height: 600px;
+}
+
 .youtube-embed-error {
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  height: 300px;
+  width: 100%;
   background-color: #f9fafb;
   color: #4b5563;
   text-align: center;
