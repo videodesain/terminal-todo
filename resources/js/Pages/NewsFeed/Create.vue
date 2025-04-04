@@ -177,17 +177,6 @@
                           orientation="landscape"
                         />
                       </div>
-                      <a 
-                        :href="form.url" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        class="mt-3 inline-flex items-center px-3 py-1 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-colors duration-200"
-                      >
-                        <span>Lihat di Twitter</span>
-                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
                     </div>
                     
                     <!-- Embed untuk platform lain -->
