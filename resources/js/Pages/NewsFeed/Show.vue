@@ -167,17 +167,24 @@
 
                 <div class="overflow-hidden">
                   <!-- Embed Content -->
-                  <div v-if="feed.meta_data?.embed_url || feed.meta_data?.html" class="w-full">
+                  <div v-if="feed.meta_data?.embed_url || feed.meta_data?.html" class="social-embed-container">
                     <!-- TikTok specific embed container -->
-                    <div v-if="feed.meta_data?.platform === 'tiktok'" class="w-full relative">
-                      <div class="tiktok-embed-wrapper">
-                        <div 
-                          v-if="feed.meta_data?.html" 
-                          class="tiktok-embed-container w-full"
-                          v-html="feed.meta_data.html"
-                          ref="tiktokContainer"
-                        ></div>
-                      </div>
+                    <div v-if="feed.meta_data?.platform === 'tiktok'" class="w-full relative tiktok-embed-wrapper">
+                      <div 
+                        v-if="feed.meta_data?.html" 
+                        class="tiktok-embed-container w-full"
+                        v-html="feed.meta_data.html"
+                        ref="tiktokContainer"
+                      ></div>
+                    </div>
+                    
+                    <!-- Instagram specific embed container -->
+                    <div v-else-if="feed.meta_data?.platform === 'instagram'" class="instagram-embed-wrapper">
+                      <div 
+                        v-if="feed.meta_data?.html"
+                        v-html="feed.meta_data.html"
+                        class="instagram-embed-container"
+                      ></div>
                     </div>
                     
                     <!-- Other platforms embed -->
@@ -524,7 +531,7 @@ const getAspectRatio = (platform) => {
 const tiktokContainer = ref(null);
 const tiktokLoaded = ref(false);
 
-// Fungsi untuk me-reload script TikTok dengan pendekatan yang lebih baik
+// Modifikasi fungsi loadTikTokScript
 const loadTikTokScript = () => {
   return new Promise((resolve, reject) => {
     // Jika widget sudah dimuat, langsung resolve
@@ -546,26 +553,28 @@ const loadTikTokScript = () => {
 
     // Handler untuk sukses
     script.onload = () => {
+      let attempts = 0;
+      const maxAttempts = 50; // Meningkatkan jumlah attempts
+      
       const checkTikTok = setInterval(() => {
+        attempts++;
         if (window.TikTok) {
           clearInterval(checkTikTok);
           tiktokLoaded.value = true;
           resolve();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkTikTok);
+          // Tidak perlu reject, biarkan tetap resolve
+          console.warn('TikTok widget load delayed, continuing anyway');
+          resolve();
         }
-      }, 100);
-
-      // Timeout setelah 10 detik
-      setTimeout(() => {
-        clearInterval(checkTikTok);
-        if (!window.TikTok) {
-          reject(new Error('TikTok widget load timeout'));
-        }
-      }, 10000);
+      }, 200); // Meningkatkan interval
     };
 
     // Handler untuk error
     script.onerror = () => {
-      reject(new Error('Failed to load TikTok script'));
+      console.warn('TikTok script failed to load, continuing anyway');
+      resolve(); // Tetap resolve meskipun error
     };
 
     // Tambahkan script ke document
@@ -573,13 +582,13 @@ const loadTikTokScript = () => {
   });
 };
 
-// Fungsi untuk me-reload embed
+// Modifikasi fungsi reloadTikTokEmbed
 const reloadTikTokEmbed = () => {
-  if (window.TikTok && tiktokLoaded.value) {
+  if (window.TikTok) {
     try {
       window.TikTok.reloadEmbeds();
     } catch (error) {
-      console.error('Error reloading TikTok embeds:', error);
+      console.warn('Error reloading TikTok embeds:', error);
     }
   }
 };
@@ -604,15 +613,17 @@ onMounted(async () => {
       });
 
       if (tiktokContainer.value) {
-        // Observe container
         observer.observe(tiktokContainer.value, {
           childList: true,
           subtree: true,
           attributes: true
         });
 
-        // Initial reload setelah observer setup
-        setTimeout(reloadTikTokEmbed, 1000);
+        // Multiple reload attempts dengan interval
+        const reloadAttempts = [0, 1000, 2000, 3000]; // Reload pada 0ms, 1s, 2s, dan 3s
+        reloadAttempts.forEach(delay => {
+          setTimeout(reloadTikTokEmbed, delay);
+        });
       }
 
       // Cleanup
@@ -620,15 +631,8 @@ onMounted(async () => {
         observer.disconnect();
       });
     } catch (error) {
-      console.error('Error loading TikTok embed:', error);
-      
-      // Retry once after error
-      try {
-        await loadTikTokScript();
-        setTimeout(reloadTikTokEmbed, 1000);
-      } catch (retryError) {
-        console.error('Retry failed:', retryError);
-      }
+      console.warn('Initial TikTok load failed, attempting reload:', error);
+      // Tidak perlu retry, karena kita sudah punya multiple reload attempts
     }
   }
 });
@@ -639,4 +643,65 @@ watch(() => props.feed.meta_data, () => {
     setTimeout(reloadTikTokEmbed, 1000);
   }
 }, { deep: true });
-</script> 
+</script>
+
+<style>
+/* Reset styling untuk embed containers */
+.social-embed-container {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  min-height: 750px; /* Tinggi minimum untuk TikTok */
+}
+
+/* Styling untuk wrapper TikTok */
+.tiktok-embed-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 605px !important; /* Maksimum lebar TikTok */
+  margin: 0 auto !important;
+  height: auto !important;
+}
+
+.tiktok-embed-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Styling untuk wrapper Instagram */
+.instagram-embed-wrapper {
+  width: 100% !important;
+  max-width: 540px !important;
+  margin: 0 auto !important;
+  background-color: white;
+  height: auto !important;
+}
+
+/* Menghilangkan scrollbar untuk semua browser */
+.tiktok-embed-wrapper,
+.instagram-embed-wrapper,
+.tiktok-embed-container {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;     /* Firefox */
+}
+
+.tiktok-embed-wrapper::-webkit-scrollbar,
+.instagram-embed-wrapper::-webkit-scrollbar,
+.tiktok-embed-container::-webkit-scrollbar {
+  display: none !important;             /* Chrome, Safari and Opera */
+}
+
+/* Override iframe styling */
+.social-embed-container iframe {
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  min-height: 750px !important;
+  height: auto !important;
+}
+</style> 
