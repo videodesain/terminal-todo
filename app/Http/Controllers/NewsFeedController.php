@@ -527,6 +527,69 @@ class NewsFeedController extends Controller
                 $data['embed_url'] = $url;
             }
 
+            // Handle Threads
+            if ($data['platform'] === 'threads') {
+                try {
+                    // Coba ambil data dari API oEmbed Threads terlebih dahulu
+                    \Log::info('Fetching Threads oEmbed data for: ' . $url);
+                    
+                    // Gunakan pendekatan yang lebih aman
+                    $threadId = null;
+                    
+                    // Ekstrak ID posting dari URL Threads
+                    if (preg_match('/threads\.net\/(?:@)?([^\/]+)\/post\/([^\/\?]+)/', $url, $matches)) {
+                        $threadId = $matches[2];
+                    } 
+                    // Format alternatif p/postid
+                    else if (preg_match('/threads\.net\/(p|post)\/([^\/\?]+)/', $url, $matches)) {
+                        $threadId = $matches[2];
+                    }
+                    // Format alternatif t/postid
+                    else if (preg_match('/threads\.net\/t\/([^\/\?]+)/', $url, $matches)) {
+                        $threadId = $matches[1];
+                    }
+                    
+                    if ($threadId) {
+                        \Log::info('Threads ID extracted: ' . $threadId);
+                        
+                        // Format yang didukung untuk embed Threads
+                        $data['embed_url'] = "https://www.threads.net/embed/post/{$threadId}?width=550";
+                        
+                        // Set provider name dan platform
+                        $data['provider_name'] = 'Threads';
+                        $data['platform'] = 'threads';
+                        
+                        // Jika tidak ada gambar thumbnail, gunakan gambar default untuk Threads
+                        if (empty($data['thumbnail_url'])) {
+                            $data['thumbnail_url'] = 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+                        }
+                        
+                        // Jika title kosong, buat title sederhana
+                        if (empty($data['title'])) {
+                            $data['title'] = 'Threads post';
+                        }
+                        
+                        // Tambahkan juga author_name jika diketahui dari URL
+                        if (isset($matches[1]) && !preg_match('/^(p|post|t)$/', $matches[1])) {
+                            $data['author_name'] = $matches[1];
+                        }
+                    } else {
+                        \Log::warning('Tidak dapat mengekstrak ID dari URL Threads: ' . $url);
+                        $data['embed_url'] = null;
+                    }
+                    
+                    \Log::info('Threads data processed (simple approach):', $data);
+                } catch (\Exception $e) {
+                    \Log::error('Error getting Threads data: ' . $e->getMessage());
+                    
+                    // Fallback ke value default jika ada error
+                    $data['embed_url'] = null;
+                    $data['provider_name'] = 'Threads';
+                    $data['platform'] = 'threads';
+                    $data['thumbnail_url'] = 'https://static.xx.fbcdn.net/rsrc.php/v3/y-/r/z5Z8VSqrb99.png';
+                }
+            }
+
             // Handle YouTube Shorts
             if (($data['platform'] === 'youtube_shorts' || $data['platform'] === 'youtube') && !$data['embed_url']) {
                 $videoId = null;
@@ -621,6 +684,7 @@ class NewsFeedController extends Controller
         $path = $urlParts['path'] ?? '';
 
         if (str_contains($host, 'instagram.com')) return 'instagram';
+        if (str_contains($host, 'threads.net')) return 'threads';
         if (str_contains($host, 'facebook.com')) {
             // Deteksi format URL share Facebook
             if (str_contains($path, '/share/p/')) {
@@ -635,6 +699,7 @@ class NewsFeedController extends Controller
 
         // Jika URL tidak cocok dengan platform yang didukung, default ke instagram jika URL mengandung kata instagram
         if (str_contains($url, 'instagram')) return 'instagram';
+        if (str_contains($url, 'threads')) return 'threads';
         
         // Tambahkan pendeteksian youtube shorts dari path
         if (str_contains($host, 'youtube.com') || str_contains($host, 'youtu.be')) {

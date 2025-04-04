@@ -19,6 +19,7 @@ use App\Http\Controllers\MetricDataController;
 use App\Http\Controllers\SocialMediaAnalyticsController;
 use App\Http\Controllers\SocialMediaReportController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProxyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -283,3 +284,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureUserIsActive::
         ->name('metric-data.force-destroy')
         ->middleware(['auth', 'verified', 'permission:manage-metric-data']);
 });
+
+// Proxy routes
+Route::get('/api/proxy-image', [ProxyController::class, 'proxyImage']);

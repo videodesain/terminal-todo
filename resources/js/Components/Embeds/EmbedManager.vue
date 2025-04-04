@@ -46,6 +46,15 @@
       :orientation="orientation"
     />
     
+    <!-- Threads Embed -->
+    <ThreadsEmbed
+      v-else-if="platform === 'threads'"
+      :url="url"
+      :embedUrl="embedDetails.embedUrl"
+      :orientation="orientation"
+      :metaData="metaData"
+    />
+    
     <!-- Default Embed sebagai fallback -->
     <DefaultEmbed
       v-else
@@ -65,6 +74,7 @@ import TikTokEmbed from './TikTokEmbed.vue';
 import InstagramEmbed from './InstagramEmbed.vue';
 import FacebookEmbed from './FacebookEmbed.vue';
 import DefaultEmbed from './DefaultEmbed.vue';
+import ThreadsEmbed from './ThreadsEmbed.vue';
 
 const props = defineProps({
   // URL asli dari embed
@@ -122,6 +132,11 @@ const platform = computed(() => {
   // Instagram
   if (cleanUrl.includes('instagram.com')) {
     return 'instagram';
+  }
+  
+  // Threads
+  if (cleanUrl.includes('threads.net')) {
+    return 'threads';
   }
   
   // Facebook
@@ -272,6 +287,61 @@ const extractDetailsFromUrl = () => {
         }
       } catch (error) {
         console.error('Error parsing Facebook URL:', error);
+      }
+      break;
+      
+    case 'threads':
+      // Untuk platform Threads, gunakan direct iframe
+      try {
+        console.log(`[EmbedManager] Memproses Threads URL: ${url}`);
+        
+        // Gunakan embed URL dari metadata jika tersedia
+        if (props.metaData && props.metaData.embed_url) {
+          console.log(`[EmbedManager] Menggunakan embed_url dari metaData untuk Threads: ${props.metaData.embed_url}`);
+          embedDetails.value.embedUrl = props.metaData.embed_url;
+          break;
+        }
+        
+        // Format 1: threads.net/@username/post/12345
+        const threadMatch = url.match(/threads\.net\/(?:@)?([^\/]+)\/post\/([^\/\?]+)/);
+        if (threadMatch && threadMatch[2]) {
+          const username = threadMatch[1];
+          const postId = threadMatch[2];
+          
+          console.log(`[EmbedManager] Threads Match pattern 1: username=${username}, postId=${postId}`);
+          embedDetails.value.id = postId;
+          embedDetails.value.embedUrl = `https://www.threads.net/embed/post/${postId}?width=550`;
+          break;
+        }
+        
+        // Format 2: threads.net/p/12345 atau threads.net/post/12345
+        const altThreadMatch = url.match(/threads\.net\/(p|post)\/([^\/\?]+)/);
+        if (altThreadMatch && altThreadMatch[2]) {
+          const postId = altThreadMatch[2];
+          
+          console.log(`[EmbedManager] Threads Match pattern 2: postId=${postId}`);
+          embedDetails.value.id = postId;
+          embedDetails.value.embedUrl = `https://www.threads.net/embed/post/${postId}?width=550`;
+          break;
+        }
+        
+        // Format 3: threads.net/t/12345
+        const tThreadMatch = url.match(/threads\.net\/t\/([^\/\?]+)/);
+        if (tThreadMatch && tThreadMatch[1]) {
+          const postId = tThreadMatch[1];
+          
+          console.log(`[EmbedManager] Threads Match pattern 3: postId=${postId}`);
+          embedDetails.value.id = postId;
+          embedDetails.value.embedUrl = `https://www.threads.net/embed/post/${postId}?width=550`;
+          break;
+        }
+        
+        // Fallback: jika tidak ada match, gunakan URL langsung
+        console.log(`[EmbedManager] Threads tidak match pattern, menggunakan URL langsung`);
+        embedDetails.value.embedUrl = url;
+      } catch (error) {
+        console.error('[EmbedManager] Error parsing Threads URL:', error);
+        embedDetails.value.embedUrl = url;
       }
       break;
       

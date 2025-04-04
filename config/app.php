@@ -157,6 +157,7 @@ return [
          */
         Spatie\Permission\PermissionServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Sentry\Laravel\ServiceProvider::class,
 
         /*
          * Application Service Providers...
