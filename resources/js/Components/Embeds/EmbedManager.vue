@@ -178,9 +178,49 @@ const extractDetailsFromUrl = () => {
       
     case 'tiktok':
       // Format: tiktok.com/@username/video/VIDEO_ID
+      let username = null;
+      let videoId = null;
+
+      // Ekstrak ID video dan username dari URL
       const tiktokMatches = url.match(/\/video\/(\d+)/);
       if (tiktokMatches && tiktokMatches[1]) {
-        embedDetails.value.id = tiktokMatches[1];
+        videoId = tiktokMatches[1];
+        embedDetails.value.id = videoId;
+      }
+
+      // Coba ekstrak username dari URL
+      const usernameMatch = url.match(/tiktok\.com\/@([^\/]+)/);
+      if (usernameMatch && usernameMatch[1]) {
+        username = usernameMatch[1];
+      }
+
+      // Buat HTML embed jika ada videoId
+      if (videoId) {
+        if (username) {
+          embedDetails.value.html = `
+            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${username}/video/${videoId}" 
+              data-video-id="${videoId}" 
+              style="max-width: 605px; min-width: 325px;">
+              <section></section>
+            </blockquote>
+          `;
+        } else {
+          embedDetails.value.html = `
+            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/video/${videoId}" 
+              data-video-id="${videoId}" 
+              style="max-width: 605px; min-width: 325px;">
+              <section></section>
+            </blockquote>
+          `;
+        }
+      } else if (url) {
+        // Fallback menggunakan URL langsung jika tidak ada ID
+        embedDetails.value.html = `
+          <blockquote class="tiktok-embed" cite="${url}" 
+            style="max-width: 605px; min-width: 325px;">
+            <section></section>
+          </blockquote>
+        `;
       }
       break;
       
@@ -229,6 +269,9 @@ const extractDetailsFromUrl = () => {
   if (props.metaData && props.metaData.id) {
     embedDetails.value.id = props.metaData.id;
   }
+
+  // Log info untuk debugging
+  console.log(`[EmbedManager] Platform: ${platformType}, ID: ${embedDetails.value.id}, HTML: ${embedDetails.value.html ? 'Yes' : 'No'}`);
 };
 
 // Setup pada mount

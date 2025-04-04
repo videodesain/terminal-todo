@@ -17,18 +17,29 @@
       </button>
     </div>
     
+    <!-- Direct Iframe Embed -->
+    <div v-else-if="useDirectIframe" class="tiktok-direct-embed">
+      <iframe 
+        :src="directIframeUrl" 
+        class="tiktok-iframe"
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+    
     <!-- TikTok Embed Content -->
     <div 
       v-else
       ref="tiktokContainer"
       class="tiktok-embed-container"
-      v-html="html"
+      v-html="generatedHtml"
     ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
 
 const props = defineProps({
   url: {
@@ -54,6 +65,93 @@ const tiktokContainer = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const tiktokLoaded = ref(false);
+const useDirectIframe = ref(true); // Ubah ke true untuk selalu menggunakan iframe langsung
+
+// Ekstrak username dan videoId dari URL jika belum ada
+const extractedInfo = computed(() => {
+  let videoId = props.videoId;
+  let username = null;
+  
+  if (!videoId && props.url) {
+    // Coba ekstrak videoId dari URL
+    const videoMatch = props.url.match(/\/video\/(\d+)/);
+    if (videoMatch && videoMatch[1]) {
+      videoId = videoMatch[1];
+    }
+    
+    // Coba ekstrak username dari URL
+    const usernameMatch = props.url.match(/tiktok\.com\/@([^\/]+)/);
+    if (usernameMatch && usernameMatch[1]) {
+      username = usernameMatch[1];
+    }
+  }
+  
+  return { videoId, username };
+});
+
+// Buat URL untuk iframe langsung
+const directIframeUrl = computed(() => {
+  const { videoId, username } = extractedInfo.value;
+  
+  if (videoId && username) {
+    return `https://www.tiktok.com/embed/v2/${videoId}?lang=id&embedFrom=oembed`;
+  } else if (videoId) {
+    return `https://www.tiktok.com/embed/v2/${videoId}?lang=id&embedFrom=oembed`;
+  } else {
+    // Jika tidak ada ID, gunakan URL langsung dengan parameter tambahan
+    const baseUrl = new URL(props.url);
+    // Pastikan tidak ada duplikasi parameter
+    if (!baseUrl.searchParams.has('embedFrom')) {
+      baseUrl.searchParams.append('embedFrom', 'oembed');
+    }
+    return baseUrl.toString();
+  }
+});
+
+// Buat HTML untuk embed jika tidak disediakan
+const generatedHtml = computed(() => {
+  // Gunakan HTML yang disediakan jika ada
+  if (props.html) {
+    return props.html;
+  }
+  
+  // Buat HTML berbasis URL jika tidak ada HTML
+  const { videoId, username } = extractedInfo.value;
+  
+  if (videoId) {
+    // Format standar embed TikTok
+    if (username) {
+      return `
+        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${username}/video/${videoId}" 
+          data-video-id="${videoId}" 
+          style="max-width: 605px; min-width: 325px;">
+          <section></section>
+        </blockquote>
+      `;
+    } else {
+      // Jika tidak ada username, gunakan format minimal
+      return `
+        <blockquote class="tiktok-embed" cite="https://www.tiktok.com/video/${videoId}" 
+          data-video-id="${videoId}" 
+          style="max-width: 605px; min-width: 325px;">
+          <section></section>
+        </blockquote>
+      `;
+    }
+  }
+  
+  // Gunakan URL langsung jika tidak ada videoId
+  if (props.url) {
+    return `
+      <blockquote class="tiktok-embed" cite="${props.url}" 
+        style="max-width: 605px; min-width: 325px;">
+        <section></section>
+      </blockquote>
+    `;
+  }
+  
+  return null;
+});
 
 // Fungsi untuk memuat script TikTok
 const loadTikTokScript = () => {
@@ -124,47 +222,26 @@ const reloadEmbed = async () => {
   loading.value = true;
   error.value = null;
   
-  try {
-    await loadTikTokScript();
-    await nextTick();
-    
-    if (tiktokContainer.value) {
-      // Setup MutationObserver untuk memantau perubahan
-      const observer = new MutationObserver(() => {
-        reloadTikTokEmbed();
-      });
-
-      observer.observe(tiktokContainer.value, {
-        childList: true,
-        subtree: true,
-        attributes: true
-      });
-
-      // Multiple reload attempts dengan interval
-      const reloadAttempts = [0, 1000, 2000, 3000];
-      let success = false;
-      
-      for (const delay of reloadAttempts) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-        success = reloadTikTokEmbed();
-        if (success) break;
-      }
-      
-      if (!success) {
-        error.value = 'Tidak dapat memuat TikTok. Silakan coba lagi nanti.';
-      }
-    }
-  } catch (err) {
-    console.error('Failed to reload TikTok embed', err);
-    error.value = 'Gagal memuat embed TikTok';
-  } finally {
+  // Coba menggunakan metode iframe langsung
+  useDirectIframe.value = true;
+  
+  setTimeout(() => {
     loading.value = false;
-  }
+  }, 1000);
 };
 
 // Setup pada mount
 onMounted(async () => {
   try {
+    // Gunakan metode iframe langsung secara default
+    if (useDirectIframe.value) {
+      setTimeout(() => {
+        loading.value = false;
+      }, 1000);
+      return;
+    }
+    
+    // Kode lama untuk pendekatan blockquote
     await loadTikTokScript();
     
     if (tiktokContainer.value) {
@@ -180,21 +257,43 @@ onMounted(async () => {
       });
 
       // Multiple reload attempts dengan interval
-      const reloadAttempts = [0, 1000, 2000, 3000];
-      reloadAttempts.forEach(delay => {
-        setTimeout(reloadTikTokEmbed, delay);
+      const reloadAttempts = [0, 1000, 2000, 3000, 5000]; // Tambah interval lebih lama
+      let intervalIds = [];
+      
+      reloadAttempts.forEach((delay, index) => {
+        const intervalId = setTimeout(() => {
+          reloadTikTokEmbed();
+          
+          // Pada percobaan terakhir, cek apakah embed berhasil
+          if (index === reloadAttempts.length - 1) {
+            // Jika container kosong, munculkan error
+            if (tiktokContainer.value && 
+                (!tiktokContainer.value.querySelector('iframe') || 
+                 tiktokContainer.value.innerHTML.trim() === generatedHtml.value.trim())) {
+              // Fallback ke iframe langsung
+              useDirectIframe.value = true;
+            }
+          }
+        }, delay);
+        
+        intervalIds.push(intervalId);
       });
       
-      // Clean up observer pada unmount
+      // Clean up timeouts dan observer pada unmount
       onUnmounted(() => {
         observer.disconnect();
+        intervalIds.forEach(id => clearTimeout(id));
       });
     }
   } catch (err) {
     console.error('Failed to initialize TikTok embed', err);
-    error.value = 'Gagal memuat embed TikTok';
+    // Fallback ke iframe langsung
+    useDirectIframe.value = true;
   } finally {
-    loading.value = false;
+    // Delay sebelum menghilangkan loading state
+    setTimeout(() => {
+      loading.value = false;
+    }, 2000); // Tunggu 2 detik minimum
   }
 });
 </script>
@@ -203,7 +302,7 @@ onMounted(async () => {
 .tiktok-embed-wrapper {
   position: relative;
   width: 100%;
-  max-width: 550px;
+  max-width: 100%;
   margin: 0 auto;
   min-height: 200px;
   border-radius: 0.75rem;
@@ -211,15 +310,27 @@ onMounted(async () => {
 }
 
 .tiktok-embed-wrapper.portrait-mode {
-  max-width: 340px;
+  max-width: 500px;
   min-height: 750px;
 }
 
-.tiktok-embed-container {
+.tiktok-embed-container,
+.tiktok-direct-embed {
   position: relative;
   width: 100%;
   height: 100%;
   min-height: 750px;
+}
+
+.tiktok-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 750px;
+  border: none;
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 9/16;
 }
 
 .tiktok-embed-loading {
@@ -293,5 +404,9 @@ onMounted(async () => {
 :deep(.dark) .loading-spinner {
   border-color: rgba(255, 255, 255, 0.1);
   border-top-color: #ffffff;
+}
+
+:deep(.dark) .tiktok-iframe {
+  background-color: #1f2937;
 }
 </style> 
