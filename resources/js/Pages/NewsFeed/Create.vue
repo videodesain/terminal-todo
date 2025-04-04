@@ -25,6 +25,12 @@
                   <option value="social_media">Media Sosial</option>
                 </SelectInput>
                 <InputError class="mt-2" :message="form.errors.type" />
+                <p v-if="form.type === 'video'" class="mt-1 text-sm text-blue-600 dark:text-blue-400">
+                  Masukkan URL video YouTube standar. YouTube Shorts harus dimasukkan sebagai "Media Sosial".
+                </p>
+                <p v-if="form.type === 'social_media'" class="mt-1 text-sm text-blue-600 dark:text-blue-400">
+                  Mendukung URL dari Facebook, Twitter/X, Instagram, TikTok, dan YouTube Shorts.
+                </p>
               </div>
 
               <!-- Form untuk tipe image -->
@@ -179,6 +185,17 @@
                       </div>
                     </div>
                     
+                    <!-- YouTube Shorts preview dengan EmbedManager -->
+                    <div v-else-if="preview.platform === 'youtubeShorts'" class="social-media-preview">
+                      <div class="embed-container youtube-shorts-container">
+                        <EmbedManager 
+                          :url="form.url" 
+                          :metaData="preview"
+                          orientation="portrait"
+                        />
+                      </div>
+                    </div>
+                    
                     <!-- Embed untuk platform lain -->
                     <div v-else-if="preview.embed_url" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                       <iframe
@@ -286,8 +303,47 @@ const fetchPreview = async (url) => {
     form.clearErrors('url')
     form.processing = true
     
+    // Cek apakah YouTube Shorts
+    const isYoutubeShorts = url && (url.includes('youtube.com/shorts/') || url.includes('youtu.be/shorts/'));
+    
+    // Konversi format URL jika perlu
+    let previewUrl = url;
+    
+    // Jika memilih tipe video tapi memasukkan URL YouTube Shorts, 
+    // tampilkan peringatan dan sarankan untuk beralih ke media sosial
+    if (isYoutubeShorts && form.type === 'video') {
+      console.log('[Create] Terdeteksi YouTube Shorts URL di tipe video, akan menampilkan peringatan');
+      form.errors.url = 'URL YouTube Shorts terdeteksi. Shorts harus dimasukkan sebagai tipe "Media Sosial". Silakan ubah tipe konten.';
+      form.processing = false;
+      preview.value = null;
+      form.meta_data = null;
+      return;
+    }
+    
+    // Jika memilih tipe social_media tapi memasukkan URL YouTube Shorts, 
+    // tangani dengan benar untuk menghindari error
+    if (isYoutubeShorts) {
+      console.log('[Create] Terdeteksi YouTube Shorts URL:', url);
+      
+      // Ekstrak ID shorts
+      const shortsMatch = url.match(/\/shorts\/([^?&]+)/);
+      if (shortsMatch && shortsMatch[1]) {
+        const videoId = shortsMatch[1];
+        
+        // Jika tipe konten adalah sosial media, persiapkan data tambahan
+        if (form.type === 'social_media') {
+          console.log('[Create] Menangani YouTube Shorts sebagai social media');
+        } 
+        // Jika tipe konten adalah video, konversi URL ke format YouTube standar
+        else if (form.type === 'video') {
+          console.log('[Create] Mengkonversi YouTube Shorts ke format video standar');
+          previewUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      }
+    }
+    
     const response = await axios.post(route('news-feeds.preview'), { 
-      url,
+      url: previewUrl,
       type: form.type 
     })
     
@@ -316,12 +372,54 @@ const fetchPreview = async (url) => {
           form.meta_data.platform = 'facebook';
         } else if (url.includes('tiktok.com')) {
           form.meta_data.platform = 'tiktok';
+        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          // Cek apakah ini YouTube Shorts
+          if (url.includes('/shorts/')) {
+            form.meta_data.platform = 'youtubeShorts';
+            console.log('[Create] Mendeteksi YouTube Shorts');
+            
+            // Ekstrak Shorts ID
+            const shortsMatch = url.match(/\/shorts\/([^?&]+)/);
+            if (shortsMatch && shortsMatch[1]) {
+              form.meta_data.video_id = shortsMatch[1];
+              form.meta_data.embed_url = `https://www.youtube.com/embed/${shortsMatch[1]}?rel=0&modestbranding=1`;
+              console.log('[Create] Berhasil ekstrak Shorts ID:', form.meta_data.video_id);
+            }
+          } else {
+            form.meta_data.platform = 'youtube';
+            console.log('[Create] Mendeteksi YouTube Video');
+          }
+        }
+      }
+      
+      // Penanganan YouTube Shorts khusus
+      if (url.includes('/shorts/')) {
+        // Pastikan platform diatur dengan benar untuk YouTube Shorts
+        form.meta_data.platform = 'youtubeShorts';
+        
+        // Ekstrak Shorts ID jika perlu
+        if (!form.meta_data.video_id) {
+          const shortsMatch = url.match(/\/shorts\/([^?&]+)/);
+          if (shortsMatch && shortsMatch[1]) {
+            form.meta_data.video_id = shortsMatch[1];
+            console.log('[Create] Ekstrak video_id untuk YouTube Shorts:', form.meta_data.video_id);
+          }
+        }
+        
+        // Pastikan embed_url diatur dengan benar
+        if (form.meta_data.video_id && !form.meta_data.embed_url) {
+          form.meta_data.embed_url = `https://www.youtube.com/embed/${form.meta_data.video_id}?rel=0&modestbranding=1`;
+        }
+        
+        // Inisialisasi html jika tidak ada
+        if (!form.meta_data.html) {
+          form.meta_data.html = null;
         }
       }
       
       // Debug dan perbaikan khusus untuk Twitter
       if (form.meta_data.platform === 'twitter' || url.includes('twitter.com') || url.includes('x.com') || 
-          (form.meta_data.html && form.meta_data.html.includes('twitter-tweet'))) {
+          (form.meta_data.html && typeof form.meta_data.html === 'string' && form.meta_data.html.includes('twitter-tweet'))) {
         
         console.log('[Create] Twitter metadata:', form.meta_data);
         // Pastikan platform diset ke twitter
@@ -709,5 +807,37 @@ const extractUsername = (url) => {
 .dark .embed-container :deep(.twitter-embed-iframe) {
   background-color: #1f2937;
   border: 1px solid #374151;
+}
+
+/* Styles untuk YouTube Shorts */
+.youtube-shorts-container {
+  width: 100%;
+  min-height: 600px;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.youtube-shorts-container :deep(.embed-manager-wrapper) {
+  width: 100%;
+  max-width: 340px;
+}
+
+.youtube-shorts-container :deep(.youtube-embed-wrapper) {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto !important;
+  min-height: 600px;
+}
+
+.youtube-shorts-container :deep(.youtube-shorts-iframe) {
+  aspect-ratio: 9/16;
+  width: 100%;
+  min-height: 600px;
+  border: none;
+}
+
+/* Fix untuk tema dark pada YouTube Shorts */
+.dark .youtube-shorts-container :deep(.youtube-shorts-iframe) {
+  background-color: #000;
 }
 </style> 

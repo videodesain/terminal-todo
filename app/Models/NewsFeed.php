@@ -209,10 +209,21 @@ class NewsFeed extends Model
 
     private static function extractYoutubeId($url) 
     {
+        // Cek apakah ini adalah YouTube Shorts URL
+        if (strpos($url, '/shorts/') !== false) {
+            // Ekstrak ID dari format shorts
+            $pattern = '/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})(?:\?|\/|$)/i';
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+        
+        // Format video standar
         $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i';
         if (preg_match($pattern, $url, $matches)) {
             return $matches[1];
         }
+        
         return null;
     }
 
