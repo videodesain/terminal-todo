@@ -30,6 +30,7 @@
       v-else-if="embedUrl"
       :src="embedUrl"
       class="instagram-embed-iframe"
+      :class="{ 'portrait-iframe': orientation === 'portrait' }"
       frameborder="0"
       scrolling="no"
       allowtransparency="true"
@@ -193,7 +194,7 @@ onMounted(async () => {
 .instagram-embed-wrapper {
   position: relative;
   width: 100%;
-  max-width: 550px;
+  max-width: 100%;
   margin: 0 auto;
   min-height: 200px;
   border-radius: 0.75rem;
@@ -201,36 +202,44 @@ onMounted(async () => {
 }
 
 .instagram-embed-wrapper.portrait-mode {
-  max-width: 400px;
-  min-height: 750px;
+  max-width: 500px;
+  min-height: 900px; /* Sesuaikan dengan Show.vue */
 }
 
 .instagram-embed-container {
   width: 100%;
   height: 100%;
-  min-height: 450px;
-  background-color: white;
+  min-height: 500px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.instagram-embed-wrapper.portrait-mode .instagram-embed-container {
+  min-height: 900px; /* Sesuaikan dengan Show.vue */
 }
 
 .instagram-embed-iframe {
   width: 100%;
-  height: 100%;
-  min-height: 450px;
+  min-height: 500px;
   border: none;
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
-.portrait-mode .instagram-embed-iframe,
-.portrait-mode .instagram-embed-container {
-  min-height: 750px;
+.instagram-embed-iframe.portrait-iframe {
+  min-height: 900px; /* Sesuaikan dengan Show.vue */
+  height: 100%;
 }
 
 .instagram-embed-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 500px;
+  height: 300px;
   width: 100%;
-  background-color: white;
+  background-color: #f9fafb;
 }
 
 .loading-spinner {
@@ -238,7 +247,7 @@ onMounted(async () => {
   height: 40px;
   border-radius: 50%;
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #405de6;
+  border-top-color: #000000;
   animation: spin 1s linear infinite;
 }
 
@@ -252,9 +261,9 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 500px;
+  height: 300px;
   width: 100%;
-  background-color: white;
+  background-color: #f9fafb;
   color: #4b5563;
   text-align: center;
   padding: 1rem;
@@ -263,7 +272,7 @@ onMounted(async () => {
 .reload-button {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
-  background-color: #405de6;
+  background-color: #000000;
   color: white;
   border-radius: 0.25rem;
   font-size: 0.875rem;
@@ -272,26 +281,26 @@ onMounted(async () => {
 }
 
 .reload-button:hover {
-  background-color: #2b44b8;
+  background-color: #333333;
 }
 
 .instagram-link {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
-  background-color: #405de6;
+  background-color: #E1306C;
   color: white;
   border-radius: 0.25rem;
   font-size: 0.875rem;
-  text-decoration: none;
+  cursor: pointer;
   transition: background-color 0.2s;
-  display: inline-block;
+  text-decoration: none;
 }
 
 .instagram-link:hover {
-  background-color: #2b44b8;
+  background-color: #c13584;
 }
 
-/* Dark mode adjustments */
+/* Dark mode */
 :deep(.dark) .instagram-embed-loading,
 :deep(.dark) .instagram-embed-error {
   background-color: #1f2937;
@@ -300,6 +309,6 @@ onMounted(async () => {
 
 :deep(.dark) .loading-spinner {
   border-color: rgba(255, 255, 255, 0.1);
-  border-top-color: #405de6;
+  border-top-color: #ffffff;
 }
 </style> 

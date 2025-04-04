@@ -39,7 +39,7 @@ class NewsFeedController extends Controller
             $query->select('id', 'name', 'profile_photo_path');
         }])
         ->latest()
-        ->paginate(10);
+        ->paginate(12);
 
         return Inertia::render('NewsFeed/Index', [
             'feeds' => $feeds
@@ -661,6 +661,23 @@ class NewsFeedController extends Controller
             
             return [
                 'username' => $username,
+                'video_id' => $videoId,
+                'embed_url' => "https://www.tiktok.com/embed/v2/{$videoId}",
+                'blockquote_html' => '<blockquote class="tiktok-embed" cite="' . $url . '" ' .
+                    'data-video-id="' . $videoId . '" ' .
+                    'style="max-width: 605px; min-width: 325px;">' .
+                    '<section></section>' .
+                    '</blockquote>' .
+                    '<script async src="https://www.tiktok.com/embed.js"></script>'
+            ];
+        }
+        
+        // Coba format alternatif jika tidak cocok dengan format standar
+        if (preg_match('/tiktok\.com\/video\/(\d+)/', $url, $matches)) {
+            $videoId = $matches[1];
+            
+            return [
+                'username' => null,
                 'video_id' => $videoId,
                 'embed_url' => "https://www.tiktok.com/embed/v2/{$videoId}",
                 'blockquote_html' => '<blockquote class="tiktok-embed" cite="' . $url . '" ' .

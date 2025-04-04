@@ -508,10 +508,15 @@ const getCardAspectClass = (feed) => {
 
 .feed-card-media {
   position: relative;
-  aspect-ratio: 9/16;
+  aspect-ratio: 16/9;
   width: 100%;
   overflow: hidden;
   background: #f3f4f6;
+}
+
+/* Khusus untuk konten TikTok menggunakan aspect ratio portrait */
+.feed-card-media:has(div[class*="tiktok"]) {
+  aspect-ratio: 9/16;
 }
 
 .feed-card-media img,
@@ -527,6 +532,7 @@ const getCardAspectClass = (feed) => {
   width: 100% !important;
   height: 100% !important;
   overflow: hidden !important;
+  aspect-ratio: 9/16;
 }
 
 .tiktok-embed-container iframe,
@@ -539,6 +545,13 @@ const getCardAspectClass = (feed) => {
   border: none !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* Preview untuk TikTok */
+[class*="tiktok"] img {
+  aspect-ratio: 9/16;
+  object-fit: cover;
+  width: 100%;
 }
 
 /* Hide scrollbars */

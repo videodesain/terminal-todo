@@ -22,6 +22,7 @@
       <iframe 
         :src="directIframeUrl" 
         class="tiktok-iframe"
+        :class="{ 'portrait-iframe': orientation === 'portrait' }"
         frameborder="0" 
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen
@@ -65,7 +66,7 @@ const tiktokContainer = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const tiktokLoaded = ref(false);
-const useDirectIframe = ref(true); // Ubah ke true untuk selalu menggunakan iframe langsung
+const useDirectIframe = ref(true); // Tetap true untuk selalu menggunakan iframe langsung
 
 // Ekstrak username dan videoId dari URL jika belum ada
 const extractedInfo = computed(() => {
@@ -89,16 +90,16 @@ const extractedInfo = computed(() => {
   return { videoId, username };
 });
 
-// Buat URL untuk iframe langsung
+// Buat URL untuk iframe langsung - tanpa parameter lang=id
 const directIframeUrl = computed(() => {
   const { videoId, username } = extractedInfo.value;
   
   if (videoId && username) {
-    return `https://www.tiktok.com/embed/v2/${videoId}?lang=id&embedFrom=oembed`;
+    return `https://www.tiktok.com/embed/v2/${videoId}`;
   } else if (videoId) {
-    return `https://www.tiktok.com/embed/v2/${videoId}?lang=id&embedFrom=oembed`;
+    return `https://www.tiktok.com/embed/v2/${videoId}`;
   } else {
-    // Jika tidak ada ID, gunakan URL langsung dengan parameter tambahan
+    // Jika tidak ada ID, gunakan URL langsung tanpa parameter tambahan
     const baseUrl = new URL(props.url);
     // Pastikan tidak ada duplikasi parameter
     if (!baseUrl.searchParams.has('embedFrom')) {
@@ -230,11 +231,14 @@ const reloadEmbed = async () => {
   }, 1000);
 };
 
-// Setup pada mount
+// Setup saat komponen di-mount
 onMounted(async () => {
   try {
+    console.log('TikTok embed mounting with URL:', props.url, 'Orientation:', props.orientation);
+    
     // Gunakan metode iframe langsung secara default
     if (useDirectIframe.value) {
+      console.log('Using direct iframe with URL:', directIframeUrl.value);
       setTimeout(() => {
         loading.value = false;
       }, 1000);
@@ -249,7 +253,7 @@ onMounted(async () => {
       const observer = new MutationObserver(() => {
         reloadTikTokEmbed();
       });
-
+      
       observer.observe(tiktokContainer.value, {
         childList: true,
         subtree: true,
@@ -272,6 +276,7 @@ onMounted(async () => {
                  tiktokContainer.value.innerHTML.trim() === generatedHtml.value.trim())) {
               // Fallback ke iframe langsung
               useDirectIframe.value = true;
+              console.log('Fallback to direct iframe after failed attempts');
             }
           }
         }, delay);
@@ -287,7 +292,7 @@ onMounted(async () => {
     }
   } catch (err) {
     console.error('Failed to initialize TikTok embed', err);
-    // Fallback ke iframe langsung
+    // Fallback ke metode iframe langsung
     useDirectIframe.value = true;
   } finally {
     // Delay sebelum menghilangkan loading state
@@ -310,8 +315,8 @@ onMounted(async () => {
 }
 
 .tiktok-embed-wrapper.portrait-mode {
-  max-width: 500px;
-  min-height: 750px;
+  max-width: 350px; /* Kembali ke 350px untuk mode portrait */
+  min-height: 850px; /* Sesuaikan dengan Show.vue */
 }
 
 .tiktok-embed-container,
@@ -319,25 +324,35 @@ onMounted(async () => {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 750px;
+  min-height: 450px; /* Diatur ke 450px */
+}
+
+.tiktok-embed-wrapper.portrait-mode .tiktok-direct-embed {
+  min-height: 850px; /* Sesuaikan dengan Show.vue */
+  height: 100%;
 }
 
 .tiktok-iframe {
   width: 100%;
   height: 100%;
-  min-height: 750px;
+  min-height: 550px; /* Diatur ke 550px */
   border: none;
   background-color: white;
   border-radius: 0.5rem;
   overflow: hidden;
-  aspect-ratio: 9/16;
+}
+
+.tiktok-iframe.portrait-iframe {
+  min-height: 850px; /* Sesuaikan dengan Show.vue */
+  height: 100%; 
+  aspect-ratio: 9/16; /* Tetap menjaga aspect ratio 9/16 */
 }
 
 .tiktok-embed-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 750px;
+  height: 300px; /* Diatur ke 300px */
   width: 100%;
   background-color: #f9fafb;
 }
@@ -361,7 +376,7 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 750px;
+  height: 300px; /* Diatur ke 300px */
   width: 100%;
   background-color: #f9fafb;
   color: #4b5563;
@@ -384,16 +399,6 @@ onMounted(async () => {
   background-color: #333333;
 }
 
-/* Menghilangkan scrollbar */
-.tiktok-embed-container {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
-.tiktok-embed-container::-webkit-scrollbar {
-  display: none !important;
-}
-
 /* Dark mode */
 :deep(.dark) .tiktok-embed-loading,
 :deep(.dark) .tiktok-embed-error {
@@ -407,6 +412,6 @@ onMounted(async () => {
 }
 
 :deep(.dark) .tiktok-iframe {
-  background-color: #1f2937;
+  background-color: transparent;
 }
 </style> 
