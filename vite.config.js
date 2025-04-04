@@ -9,7 +9,6 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
-            buildDirectory: 'build'
         }),
         vue({
             template: {
@@ -31,20 +30,6 @@ export default defineConfig({
             },
         }),
     ],
-    resolve: {
-        alias: {
-            '@': '/resources/js',
-        },
-    },
-    optimizeDeps: {
-        include: [
-            '@inertiajs/vue3',
-            '@meforma/vue-toaster',
-            'axios',
-            'vue'
-        ],
-        exclude: ['ziggy-js']
-    },
     build: {
         outDir: 'public/build',
         assetsDir: '',
@@ -62,12 +47,26 @@ export default defineConfig({
                     if (assetInfo.name.endsWith('.css')) {
                         return 'css/[name][extname]';
                     }
-                    return 'assets/[name][extname]';
+                    return 'assets/[name]-[hash][extname]';
                 },
-                chunkFileNames: 'js/[name].js',
-                entryFileNames: 'js/[name].js'
+                chunkFileNames: 'js/[name]-[hash].js',
+                entryFileNames: 'js/[name]-[hash].js'
             }
         }
+    },
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+    },
+    optimizeDeps: {
+        include: [
+            '@inertiajs/vue3',
+            '@meforma/vue-toaster',
+            'axios',
+            'vue'
+        ],
+        exclude: ['ziggy-js']
     },
     server: {
         port: 5175,
