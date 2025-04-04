@@ -39,7 +39,7 @@ class NewsFeedController extends Controller
             $query->select('id', 'name', 'profile_photo_path');
         }])
         ->latest()
-        ->paginate(12);
+        ->paginate(9);
 
         return Inertia::render('NewsFeed/Index', [
             'feeds' => $feeds
