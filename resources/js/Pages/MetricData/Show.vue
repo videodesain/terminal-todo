@@ -214,7 +214,9 @@ const getPlatformIcon = (platform) => {
         youtube: 'fa-brands fa-youtube',
         linkedin: 'fa-brands fa-linkedin-in',
         pinterest: 'fa-brands fa-pinterest-p',
-        default: 'fa-brands fa-globe'
+        website: 'fa-brands fa-chrome',
+        threads: 'fa-brands fa-threads',
+        default: 'fa-brands fa-chrome'
     }
     return icons[platform] || icons.default
 }
@@ -228,6 +230,8 @@ const getPlatformClass = (platform) => {
         youtube: 'bg-red-600 text-white',
         linkedin: 'bg-blue-700 text-white',
         pinterest: 'bg-red-700 text-white',
+        website: 'bg-blue-500 text-white',
+        threads: 'bg-black text-white',
         default: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
     }
     return classes[platform] || classes.default

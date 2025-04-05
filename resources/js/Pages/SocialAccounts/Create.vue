@@ -153,7 +153,7 @@ const getPlatformNameById = (id) => {
 
 // Fungsi untuk mendapatkan ikon platform
 const getPlatformIcon = (platform) => {
-    if (!platform) return 'fa-brands fa-globe';
+    if (!platform) return 'fa-brands fa-chrome';
     
     // Cari platform di data platforms
     const platformData = props.platforms.find(p => p.name.toLowerCase() === platform.toLowerCase());
@@ -170,8 +170,10 @@ const getPlatformIcon = (platform) => {
         youtube: 'fa-brands fa-youtube',
         linkedin: 'fa-brands fa-linkedin-in',
         pinterest: 'fa-brands fa-pinterest-p',
+        website: 'fa-brands fa-chrome',
+        threads: 'fa-brands fa-threads',
         // Tambahkan platform lain sesuai kebutuhan
-        default: 'fa-brands fa-globe' // Icon default jika platform tidak ditemukan
+        default: 'fa-brands fa-chrome' // Icon default jika platform tidak ditemukan
     }
     return icons[platform] || icons.default
 }
@@ -186,6 +188,8 @@ const getPlatformClass = (platform) => {
         youtube: 'bg-red-600 text-white',
         linkedin: 'bg-blue-700 text-white',
         pinterest: 'bg-red-700 text-white',
+        website: 'bg-blue-500 text-white',
+        threads: 'bg-black text-white',
         // Tambahkan platform lain sesuai kebutuhan
         default: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
     }
