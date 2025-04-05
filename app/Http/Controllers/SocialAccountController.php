@@ -61,9 +61,27 @@ class SocialAccountController extends Controller
 
     public function edit(SocialAccount $socialAccount)
     {
+        $user = auth()->user();
+        
         return Inertia::render('SocialAccounts/Edit', [
             'account' => $socialAccount,
-            'platforms' => Platform::where('is_active', true)->get()
+            'platforms' => Platform::where('is_active', true)->get(),
+            'auth' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'avatar_url' => $user->avatar_url,
+                    'roles' => $user->roles ? $user->roles->pluck('name')->toArray() : [],
+                    'permissions' => method_exists($user, 'getAllPermissions') ? $user->getAllPermissions()->pluck('name')->toArray() : [],
+                    'status' => $user->status,
+                    'email_verified_at' => $user->email_verified_at,
+                    'last_login_at' => $user->last_login_at ? $user->last_login_at->diffForHumans() : null,
+                    'is_admin' => method_exists($user, 'hasRole') ? $user->hasRole('Super Admin') : false,
+                    'is_content_manager' => method_exists($user, 'hasRole') ? $user->hasRole('Content Manager') : false
+                ]
+            ]
         ]);
     }
 

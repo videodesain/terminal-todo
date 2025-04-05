@@ -45,5 +45,10 @@
 </head>
 <body class="font-sans antialiased h-full bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">
     @inertia
+    
+    <!-- Hidden logout form for PWA reset -->
+    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+        @csrf
+    </form>
 </body>
 </html>

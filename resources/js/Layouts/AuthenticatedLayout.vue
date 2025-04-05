@@ -5,6 +5,10 @@ import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import AppNavigation from '@/Components/Navigation/AppNavigation.vue';
 import { Head } from "@inertiajs/vue3";
 import { usePermission } from '@/Composables/usePermission';
+import PWAInstallPrompt from '@/Components/PWAInstallPrompt.vue';
+
+// Referensi ke komponen PWAInstallPrompt
+const pwaPromptRef = ref(null);
 
 // Gunakan route dari global properties
 const route = (...args) => {
@@ -83,7 +87,13 @@ onMounted(() => {
 });
 
 const logout = () => {
-    router.post(route('logout'));
+    // Reset PWA prompt status saat logout
+    if (pwaPromptRef.value) {
+        pwaPromptRef.value.resetPWAPromptStatus();
+    }
+    
+    // Submit form logout
+    document.getElementById('logout-form').submit();
 };
 
 // Computed untuk mengecek role admin
@@ -288,6 +298,9 @@ defineExpose({ hasPermission });
                 </div>
             </main>
         </div>
+
+        <!-- PWA Install Prompt Component -->
+        <PWAInstallPrompt ref="pwaPromptRef" />
     </div>
 </template>
 

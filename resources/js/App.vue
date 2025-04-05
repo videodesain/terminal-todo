@@ -29,19 +29,13 @@
     <main>
       <router-view></router-view>
     </main>
-    
-    <!-- PWA Install Prompt -->
-    <PWAInstallPrompt />
   </div>
 </template>
 
 <script>
-import PWAInstallPrompt from './Components/PWAInstallPrompt.vue';
-
 export default {
   name: 'App',
   components: {
-    PWAInstallPrompt
   },
   data() {
     return {

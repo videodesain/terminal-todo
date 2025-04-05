@@ -59,16 +59,16 @@
                         </div>
 
                         <div>
-                            <InputLabel for="url" value="URL Profil" />
+                            <InputLabel for="profile_url" value="URL Profil" />
                             <TextInput
-                                id="url"
+                                id="profile_url"
                                 type="url"
-                                v-model="form.url"
+                                v-model="form.profile_url"
                                 class="mt-1 block w-full"
                                 required
                                 placeholder="https://instagram.com/username"
                             />
-                            <InputError :message="form.errors.url" class="mt-2" />
+                            <InputError :message="form.errors.profile_url" class="mt-2" />
                         </div>
 
                         <div>
@@ -122,7 +122,7 @@ import InputLabel from '@/Components/InputLabel.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps({
     account: {
@@ -132,20 +132,38 @@ const props = defineProps({
     platforms: {
         type: Array,
         required: true
+    },
+    auth: {
+        type: Object,
+        required: true
     }
+})
+
+// Console log untuk melihat data yang diterima
+onMounted(() => {
+    console.log('Account data:', props.account);
+    console.log('Platforms:', props.platforms);
 })
 
 const form = useForm({
     platform_id: props.account.platform_id,
     name: props.account.name,
     username: props.account.username,
-    url: props.account.url,
-    description: props.account.description,
+    profile_url: props.account.profile_url,
+    description: props.account.description || '',
     is_active: props.account.is_active
 })
 
 const submit = () => {
-    form.put(route('social-accounts.update', props.account.id))
+    console.log('Form data being submitted:', form.data());
+    form.put(route('social-accounts.update', props.account.id), {
+        onSuccess: () => {
+            console.log('Form submitted successfully!');
+        },
+        onError: (errors) => {
+            console.error('Form submission errors:', errors);
+        }
+    });
 }
 
 // Fungsi untuk mendapatkan nama platform dari ID
