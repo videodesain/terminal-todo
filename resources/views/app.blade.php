@@ -7,6 +7,25 @@
     
     <title inertia>{{ config('app.name', 'Terminal') }}</title>
 
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="{{ config('app.name', 'Terminal') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Terminal') }}">
+    <meta name="description" content="Aplikasi pengelolaan sosial media dan todo list">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="/icons/pwa-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/pwa-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/pwa-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/pwa-192x192.png">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />

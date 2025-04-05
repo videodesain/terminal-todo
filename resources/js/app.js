@@ -80,3 +80,45 @@ createInertiaApp({
         color: "#4B5563",
     },
 });
+
+// Registrasi Service Worker untuk PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker berhasil didaftarkan:', registration.scope);
+                
+                // Event listener untuk update service worker
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Tampilkan notifikasi pembaruan tersedia
+                            const toast = document.createElement('div');
+                            toast.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center';
+                            toast.innerHTML = `
+                                <span class="mr-3">Pembaruan aplikasi tersedia!</span>
+                                <button id="refresh-app" class="px-3 py-1 bg-white text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50">Perbarui</button>
+                            `;
+                            document.body.appendChild(toast);
+                            
+                            // Tombol refresh untuk memuat ulang halaman
+                            document.getElementById('refresh-app').addEventListener('click', () => {
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                window.location.reload();
+                            });
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Gagal mendaftarkan Service Worker:', error);
+            });
+            
+        // Event listener untuk update service worker
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('New service worker activated, reloading for fresh content');
+        });
+    });
+}
