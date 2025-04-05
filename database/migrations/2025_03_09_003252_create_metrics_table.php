@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('metrics', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('platform_id')->constrained('social_platforms')->onDelete('cascade');
+            $table->foreignId('platform_id')->constrained('platforms')->onDelete('cascade');
             $table->string('name');
             $table->string('key');
             $table->string('unit')->default('number');

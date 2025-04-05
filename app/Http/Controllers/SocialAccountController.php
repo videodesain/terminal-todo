@@ -48,7 +48,7 @@ class SocialAccountController extends Controller
             'platform_id' => 'required|exists:platforms,id',
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255',
-            'url' => 'required|url|max:255',
+            'profile_url' => 'required|url|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean'
         ]);
@@ -73,7 +73,7 @@ class SocialAccountController extends Controller
             'platform_id' => 'required|exists:platforms,id',
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255',
-            'url' => 'required|url|max:255',
+            'profile_url' => 'required|url|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean'
         ]);

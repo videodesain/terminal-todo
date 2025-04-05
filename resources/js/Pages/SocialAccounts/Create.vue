@@ -61,14 +61,14 @@
                         <div>
                             <InputLabel for="url" value="URL Profil" />
                             <TextInput
-                                id="url"
+                                id="profile_url"
                                 type="url"
-                                v-model="form.url"
+                                v-model="form.profile_url"
                                 class="mt-1 block w-full"
                                 required
                                 placeholder="https://instagram.com/username"
                             />
-                            <InputError :message="form.errors.url" class="mt-2" />
+                            <InputError :message="form.errors.profile_url" class="mt-2" />
                         </div>
 
                         <div>
@@ -135,7 +135,7 @@ const form = useForm({
     platform_id: '',
     name: '',
     username: '',
-    url: '',
+    profile_url: '',
     description: '',
     is_active: true
 })
@@ -147,12 +147,21 @@ const submit = () => {
 // Fungsi untuk mendapatkan nama platform dari ID
 const getPlatformNameById = (id) => {
     if (!id) return '';
-    const platform = props.platforms.find(p => p.id === id);
+    const platform = props.platforms.find(p => p.id === parseInt(id));
     return platform ? platform.name : '';
 }
 
 // Fungsi untuk mendapatkan ikon platform
 const getPlatformIcon = (platform) => {
+    if (!platform) return 'fa-brands fa-globe';
+    
+    // Cari platform di data platforms
+    const platformData = props.platforms.find(p => p.name.toLowerCase() === platform.toLowerCase());
+    if (platformData && platformData.icon) {
+        return `fa-brands fa-${platformData.icon}`;
+    }
+    
+    // Fallback untuk icon default
     const icons = {
         instagram: 'fa-brands fa-instagram',
         facebook: 'fa-brands fa-facebook-f',

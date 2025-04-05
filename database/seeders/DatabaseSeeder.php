@@ -40,9 +40,8 @@ class DatabaseSeeder extends Seeder
             // 6. Data metrics dan metrics data
             $this->call(MetricSeeder::class);
             
-            // 7. Hapus panggilan ke SocialAccountSeeder karena ada masalah
-            // dengan referensi ke social_platforms yang belum ada
-            // $this->call(SocialAccountSeeder::class);
+            // 7. SocialAccountSeeder sudah bisa dijalankan karena foreign key sudah diperbaiki
+            $this->call(SocialAccountSeeder::class);
             
             // 8. MetricDataSeeder tetap bisa dijalankan
             $this->call(MetricDataSeeder::class);

@@ -33,7 +33,7 @@ class SocialAccount extends Model
 
     public function platform()
     {
-        return $this->belongsTo(SocialPlatform::class, 'platform_id');
+        return $this->belongsTo(Platform::class, 'platform_id');
     }
 
     public function metricData()

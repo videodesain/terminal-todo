@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SocialAccount;
-use App\Models\SocialPlatform;
+use App\Models\Platform;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -13,11 +13,11 @@ class SocialAccountSeeder extends Seeder
     public function run(): void
     {
         try {
-            // Periksa apakah tabel social_platforms memiliki data
-            $platforms = SocialPlatform::all();
+            // Periksa apakah tabel platforms memiliki data
+            $platforms = Platform::where('is_active', true)->get();
             
             if ($platforms->isEmpty()) {
-                Log::warning('No social platforms found. Creating social accounts skipped.');
+                Log::warning('No active platforms found. Creating social accounts skipped.');
                 return;
             }
 
