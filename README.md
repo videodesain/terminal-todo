@@ -360,6 +360,7 @@ Untuk men-deploy aplikasi ke server produksi dengan benar, ikuti langkah-langkah
 1. Gunakan script deploy yang disediakan:
 
 ```bash
+cd /path/to/aplikasi
 ./scripts/deploy.sh
 ```
 
@@ -393,12 +394,41 @@ Jika Anda melihat error:
 Vite manifest not found at: /path/to/public/build/manifest.json
 ```
 
-Coba solusi berikut:
-1. Bersihkan cache Vite: `rm -rf public/build`
-2. Rebuild frontend: `npm run build`
-3. Pastikan manifest.json ada: `node scripts/ensure-manifest.js`
-4. Jika masih bermasalah, salin manifest secara manual:
-   ```bash
-   cp public/build/.vite/manifest.json public/build/
-   ```
-5. Bersihkan cache Laravel: `php artisan cache:clear`
+#### Metode 1: Gunakan script perbaikan otomatis
+```bash
+# Di server produksi
+cd /path/to/aplikasi
+node scripts/manual-manifest-fix.js
+php artisan cache:clear
+```
+
+#### Metode 2: Lakukan perbaikan manual
+```bash
+# 1. Bersihkan cache Vite
+rm -rf public/build/.vite/manifest.json
+
+# 2. Rebuild frontend 
+npm run build
+
+# 3. Jika masih bermasalah, salin manifest secara manual
+mkdir -p public/build
+cp public/build/.vite/manifest.json public/build/
+
+# 4. Set izin file yang benar
+chmod 644 public/build/manifest.json
+
+# 5. Bersihkan cache Laravel
+php artisan cache:clear
+```
+
+#### Troubleshooting Error ESM
+Jika mendapat error "require is not defined in ES module scope", pastikan file JS menggunakan sintaks ES modules:
+
+```bash
+# Contoh: Ubah CommonJS ke ESM
+# Ganti `const fs = require('fs')` dengan `import fs from 'fs'`
+
+# Atau jalankan script dengan ekstensi .cjs
+mv scripts/ensure-manifest.js scripts/ensure-manifest.cjs
+node scripts/ensure-manifest.cjs
+```

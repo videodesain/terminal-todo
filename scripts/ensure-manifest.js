@@ -5,12 +5,18 @@
  * di .vite/manifest.json tetapi Laravel mencarinya di build/manifest.json
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Path relatif ke root project
-const viteManifestPath = path.join('public', 'build', '.vite', 'manifest.json');
-const laravelManifestPath = path.join('public', 'build', 'manifest.json');
+// Dapatkan __dirname di ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path absolut ke root project 
+const rootDir = path.resolve(__dirname, '..');
+const viteManifestPath = path.join(rootDir, 'public', 'build', '.vite', 'manifest.json');
+const laravelManifestPath = path.join(rootDir, 'public', 'build', 'manifest.json');
 
 console.log('🔍 Memastikan manifest.json tersedia untuk Laravel...');
 
@@ -42,7 +48,7 @@ try {
     console.error(`❌ Manifest Vite tidak ditemukan di ${viteManifestPath}`);
     
     // Periksa keberadaan build directory
-    const buildDir = path.join('public', 'build');
+    const buildDir = path.join(rootDir, 'public', 'build');
     if (!fs.existsSync(buildDir)) {
       console.error(`❌ Direktori build tidak ditemukan. Jalankan 'npm run build' terlebih dahulu.`);
     } else {

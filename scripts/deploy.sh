@@ -18,7 +18,8 @@ echo "🔧 Installing PHP dependencies..."
 composer install --no-dev --optimize-autoloader --no-interaction
 
 echo "🔧 Installing Node.js dependencies..."
-npm ci
+# Gunakan --legacy-peer-deps jika ada masalah kompatibilitas
+npm ci --no-audit || npm install --no-audit
 
 # 2. Build assets
 echo "🔨 Building frontend assets..."
@@ -47,8 +48,17 @@ else
     if [ ! -f "$MANIFEST_PATH" ]; then
         echo "❌ Warning: Tidak dapat menemukan manifest.json!"
         echo "❌ Build frontend mungkin gagal. Periksa log untuk detail."
+        
+        # Coba salin dari backup jika ada
+        if [ -f "public/build/manifest.json.bak" ]; then
+            echo "🔄 Mencoba memulihkan dari backup..."
+            cp "public/build/manifest.json.bak" "$MANIFEST_PATH"
+            chmod 644 "$MANIFEST_PATH"
+        fi
     else
         echo "✓ Manifest sudah tersedia di lokasi yang benar"
+        # Buat backup
+        cp "$MANIFEST_PATH" "public/build/manifest.json.bak"
     fi
 fi
 

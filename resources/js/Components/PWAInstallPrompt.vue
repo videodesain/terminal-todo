@@ -43,15 +43,15 @@
       <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between">
         <div>
           <button @click="remindLater" class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm">
-            Ingatkan nanti
+            Nanti Saja
           </button>
         </div>
         <div class="space-x-2">
           <button @click="closePromptUntilLogout" class="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-600">
-            Jangan tampilkan lagi
+            Tutup Dulu
           </button>
           <button @click="installPWA" class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700">
-            Instal sekarang
+            Install
           </button>
         </div>
       </div>
