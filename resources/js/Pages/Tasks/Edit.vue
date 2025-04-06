@@ -277,7 +277,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.put(route('tasks.update', props.task.id));
+    form.patch(route('tasks.update', props.task.id));
 };
 </script>
 
