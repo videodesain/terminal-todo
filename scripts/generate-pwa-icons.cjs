@@ -2,13 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 // Buat direktori jika belum ada
-const iconsDir = path.join(__dirname, 'public', 'icons');
+const iconsDir = path.join(__dirname, '..', 'public', 'icons');
 if (!fs.existsSync(iconsDir)) {
     fs.mkdirSync(iconsDir, { recursive: true });
 }
 
 // Buat file HTML dengan instruksi
-const htmlPath = path.join(__dirname, 'pwa-icons-guide.html');
+const htmlPath = path.join(__dirname, '..', 'public', 'pwa-icons-guide.html');
 const htmlContent = `
 <!DOCTYPE html>
 <html lang="id">

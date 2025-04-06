@@ -456,9 +456,6 @@ const submitComment = () => {
     commentForm.value.processing = true;
     resetCommentForm();
     
-    // Log pengiriman komentar
-    console.log('[COMMENT] Mengirim komentar untuk task ID:', props.task.id);
-    
     // Dapatkan CSRF token dari meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
@@ -473,7 +470,6 @@ const submitComment = () => {
         }
     })
     .then(response => {
-        console.log('[COMMENT] Komentar berhasil dikirim:', response.data);
         commentForm.value.processing = false;
         
         // Tampilkan notifikasi sukses
@@ -489,7 +485,6 @@ const submitComment = () => {
         }, 1000);
     })
     .catch(error => {
-        console.error('[COMMENT] Error mengirim komentar:', error);
         commentForm.value.processing = false;
         
         // Kembalikan nilai ke form jika gagal
@@ -536,9 +531,6 @@ const updateComment = (commentId) => {
 
     editCommentForm.value.processing = true;
     
-    // Log pengiriman komentar
-    console.log('[COMMENT] Memperbarui komentar ID:', commentId);
-    
     // Dapatkan CSRF token dari meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
@@ -553,7 +545,6 @@ const updateComment = (commentId) => {
         }
     })
     .then(response => {
-        console.log('[COMMENT] Komentar berhasil diperbarui:', response.data);
         editCommentForm.value.processing = false;
         editingCommentId.value = null;
         
@@ -570,7 +561,6 @@ const updateComment = (commentId) => {
         }, 1000);
     })
     .catch(error => {
-        console.error('[COMMENT] Error memperbarui komentar:', error);
         editCommentForm.value.processing = false;
         
         // Set error jika ada
@@ -604,9 +594,6 @@ const confirmDeleteComment = () => {
     
     isDeleting.value = true;
     
-    // Log pengiriman komentar
-    console.log('[COMMENT] Menghapus komentar ID:', commentIdToDelete.value);
-    
     // Dapatkan CSRF token dari meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
@@ -619,7 +606,9 @@ const confirmDeleteComment = () => {
         }
     })
     .then(response => {
-        console.log('[COMMENT] Komentar berhasil dihapus:', response.data);
+        showDeleteModal.value = false;
+        isDeleting.value = false;
+        commentIdToDelete.value = null;
         
         // Tampilkan notifikasi sukses
         if (typeof toast !== 'undefined' && toast.success) {
@@ -628,18 +617,12 @@ const confirmDeleteComment = () => {
             alert('Komentar berhasil dihapus');
         }
         
-        // Tutup modal
-        showDeleteModal.value = false;
-        isDeleting.value = false;
-        commentIdToDelete.value = null;
-        
         // Reload halaman untuk menyembunyikan komentar yang dihapus
         setTimeout(() => {
             window.location.href = route('tasks.show', props.task.id) + '?refresh=' + Date.now();
         }, 1000);
     })
     .catch(error => {
-        console.error('[COMMENT] Error menghapus komentar:', error);
         isDeleting.value = false;
         
         // Tampilkan notifikasi error
@@ -679,13 +662,6 @@ const deleteTask = () => {
 
 // Tambahkan computed property untuk debug tombol arsip
 const showArchiveButton = computed(() => {
-    console.log('Debug Archive Button:', {
-        hasEditPermission: hasPermission('edit-task'),
-        hasManagePermission: hasPermission('manage-task'),
-        taskStatus: props.task.status,
-        isArchived: !!props.task.archived_at
-    });
-    
     return (hasPermission('edit-task') || hasPermission('manage-task')) && 
            !props.task.archived_at && 
            (props.task.status === 'completed' || props.task.status === 'cancelled');

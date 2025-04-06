@@ -299,6 +299,11 @@ const fetchPreview = async (url) => {
         }
       }
     }
+
+    // Gunakan fungsi processThumbnailUrl untuk thumbnail
+    if (form.meta_data && form.meta_data.thumbnail_url) {
+      form.meta_data.thumbnail_url = processThumbnailUrl(form.meta_data.thumbnail_url);
+    }
   } catch (error) {
     console.error('Error fetching preview:', error)
     form.errors.url = `Tidak dapat mengambil preview: ${error.response?.data?.error || error.message}`
@@ -454,6 +459,27 @@ const extractUsername = (url) => {
   
   return null;
 };
+
+// Fungsi untuk handling thumbnail URL
+const processThumbnailUrl = (url) => {
+  if (!url) {
+    return 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
+  }
+  
+  // Perbaiki URL relatif
+  if (url.startsWith('/')) {
+    try {
+      const originalUrl = form.url;
+      const urlObj = new URL(originalUrl);
+      return `${urlObj.protocol}//${urlObj.hostname}${url}`;
+    } catch (e) {
+      // Jika URL tidak valid
+      return url;
+    }
+  }
+  
+  return url;
+}
 </script>
 
 <style>

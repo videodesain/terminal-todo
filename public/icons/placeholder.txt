@@ -1,0 +1,1 @@
+Letakkan ikon PWA Anda di folder ini dengan nama: pwa-192x192.png dan pwa-512x512.png

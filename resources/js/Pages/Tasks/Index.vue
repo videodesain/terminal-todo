@@ -321,16 +321,6 @@
                 </div>
             </div>
         </Modal>
-        
-        <!-- Debug Button (hapus di production) -->
-        <div v-if="debugMode" class="fixed bottom-4 right-4">
-            <button 
-                @click="forceRefresh"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg"
-            >
-                Refresh
-            </button>
-        </div>
     </AuthenticatedLayout>
 </template>
 
@@ -380,7 +370,7 @@ const dateFilter = ref({
 const selectedTask = ref(null);
 const confirmingTaskDeletion = ref(false);
 const form = useForm({});
-const debugMode = ref(false);  // Set ke true untuk debugging
+const debugMode = ref(false);  // Set ke false permanen
 
 // Pagination state
 const itemsPerPage = 5;
@@ -401,14 +391,6 @@ const statuses = [
 
 // Notification handler
 onMounted(() => {
-    // Deteksi dan log duplikasi untuk debugging
-    const taskIds = props.tasks.map(t => t.id);
-    const uniqueIds = new Set(taskIds);
-    
-    if (uniqueIds.size < taskIds.length) {
-        console.warn(`[KANBAN] Terdeteksi ${taskIds.length - uniqueIds.size} task duplikat dalam data input!`);
-    }
-
     // Tampilkan error jika ada
     if (props.error) {
         toast.error(props.error);
@@ -595,15 +577,6 @@ const deleteTask = () => {
 // Edit task
 const editTask = (taskId) => {
     router.visit(route('tasks.edit', taskId));
-};
-
-// Force refresh
-const forceRefresh = () => {
-    // Tandai dengan timestamp untuk menghindari cache
-    window.location.href = route('tasks.index', {
-        timestamp: Date.now(),
-        nocache: Math.random().toString(36).substring(2)
-    });
 };
 
 const isDraggingOver = ref(null);

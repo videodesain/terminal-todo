@@ -416,65 +416,6 @@ const fetchPreview = async (url) => {
           form.meta_data.html = null;
         }
       }
-      
-      // Debug dan perbaikan khusus untuk Twitter
-      if (form.meta_data.platform === 'twitter' || url.includes('twitter.com') || url.includes('x.com') || 
-          (form.meta_data.html && typeof form.meta_data.html === 'string' && form.meta_data.html.includes('twitter-tweet'))) {
-        
-        console.log('[Create] Twitter metadata:', form.meta_data);
-        // Pastikan platform diset ke twitter
-        form.meta_data.platform = 'twitter';
-        
-        // Cari thumbnail dari berbagai sumber yang mungkin
-        if (!form.meta_data.thumbnail_url) {
-          // Coba ekstrak dari twitter:image
-          if (form.meta_data.twitter_image) {
-            form.meta_data.thumbnail_url = form.meta_data.twitter_image;
-            console.log('[Create] Menggunakan twitter_image sebagai thumbnail:', form.meta_data.thumbnail_url);
-          }
-          // Coba ekstrak dari og:image
-          else if (form.meta_data.og_image) {
-            form.meta_data.thumbnail_url = form.meta_data.og_image;
-            console.log('[Create] Menggunakan og_image sebagai thumbnail:', form.meta_data.thumbnail_url);
-          }
-          // Coba ekstrak dari twitter:player:image
-          else if (form.meta_data.twitter_player_image) {
-            form.meta_data.thumbnail_url = form.meta_data.twitter_player_image;
-            console.log('[Create] Menggunakan twitter_player_image sebagai thumbnail:', form.meta_data.thumbnail_url);
-          }
-          // Coba ekstrak dari HTML jika ada URL gambar
-          else if (form.meta_data.html && typeof form.meta_data.html === 'string') {
-            const imgMatch = form.meta_data.html.match(/<img[^>]+src="([^">]+)"/i);
-            if (imgMatch && imgMatch[1]) {
-              form.meta_data.thumbnail_url = imgMatch[1];
-              console.log('[Create] Ekstrak thumbnail dari HTML:', form.meta_data.thumbnail_url);
-            }
-          }
-        }
-        
-        // Validasi thumbnail URL
-        if (form.meta_data.thumbnail_url) {
-          // Perbaiki URL relatif jika diperlukan
-          if (form.meta_data.thumbnail_url.startsWith('/')) {
-            const urlObj = new URL(url);
-            form.meta_data.thumbnail_url = `${urlObj.protocol}//${urlObj.hostname}${form.meta_data.thumbnail_url}`;
-            console.log('[Create] Fixed relative URL:', form.meta_data.thumbnail_url);
-          }
-          
-          // Test thumbnail URL
-          const testImg = new Image();
-          testImg.onload = () => console.log('[Create] Thumbnail URL valid:', form.meta_data.thumbnail_url);
-          testImg.onerror = () => {
-            console.error('[Create] Thumbnail URL tidak valid:', form.meta_data.thumbnail_url);
-            // Jika Twitter URL tidak valid, coba gunakan default Twitter logo sebagai fallback
-            form.meta_data.thumbnail_url = 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
-          };
-          testImg.src = form.meta_data.thumbnail_url;
-        }
-        
-        // PENTING: Untuk Twitter, kita PERLU mempertahankan HTML untuk EmbedManager
-        // TIDAK menghapus HTML dari Twitter metadata seperti sebelumnya
-      }
     }
   } catch (error) {
     console.error('Error fetching preview:', error)
@@ -578,14 +519,6 @@ watch(() => form.url, async (newUrl) => {
 const getProxyImageUrl = (url) => {
   if (!url) {
     console.log('[Create] URL gambar kosong, menggunakan fallback');
-    return 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
-  }
-  
-  // Debug untuk thumbnail Twitter
-  if (url && typeof url === 'string') {
-    console.log('[Create] URL gambar asli:', url);
-  } else {
-    console.log('[Create] URL bukan string:', typeof url);
     return 'https://abs.twimg.com/responsive-web/client-web/icon-default.522d363a.png';
   }
   
