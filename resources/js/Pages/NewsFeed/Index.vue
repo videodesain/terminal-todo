@@ -320,15 +320,24 @@
           <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Tidak ada data yang ditemukan</h3>
           <p class="text-gray-600 dark:text-gray-400">
             {{ selectedType !== 'all' || selectedPeriod !== 'all' 
-              ? 'Coba ubah filter atau periode untuk melihat lebih banyak feed.' 
+              ? `Tidak ada feed ${selectedType !== 'all' ? selectedType === 'news' ? 'berita' : selectedType === 'video' ? 'video' : selectedType === 'image' ? 'gambar' : 'sosial media' : ''} yang ditemukan ${selectedPeriod === 'week' ? 'minggu ini' : selectedPeriod === 'today' ? 'hari ini' : selectedPeriod === 'month' ? 'bulan ini' : selectedPeriod === 'year' ? 'tahun ini' : ''}.` 
               : 'Belum ada feed yang ditambahkan.' }}
           </p>
-          <Link
-            :href="route('news-feeds.create')"
-            class="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
-          >
-            Tambah Feed Baru
-          </Link>
+          <div class="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              :href="route('news-feeds.create')"
+              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
+            >
+              Tambah Feed Baru
+            </Link>
+            <button
+              v-if="selectedPeriod !== 'all'"
+              @click="selectedPeriod = 'all'"
+              class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg"
+            >
+              Lihat Semua Feed
+            </button>
+          </div>
         </div>
 
         <!-- Pagination hanya ditampilkan jika ada data -->
@@ -354,7 +363,7 @@ console.log('Total feeds di pagination:', props.feeds.total);
 console.log('Pagination links:', props.feeds.links);
 
 const selectedType = ref('all')
-const selectedPeriod = ref('all')
+const selectedPeriod = ref('week')
 const startDate = ref('')
 const endDate = ref('')
 

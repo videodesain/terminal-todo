@@ -22,7 +22,8 @@ class SocialAccount extends Model
         'profile_url',
         'avatar_url',
         'is_active',
-        'metadata'
+        'metadata',
+        'description'
     ];
 
     protected $casts = [
