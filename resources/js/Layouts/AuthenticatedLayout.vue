@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, watch, inject } from "vue";
+import { ref, computed, onMounted, watch, inject, provide } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import AppNavigation from '@/Components/Navigation/AppNavigation.vue';
 import { Head } from "@inertiajs/vue3";
 import { usePermission } from '@/Composables/usePermission';
 import PWAInstallPrompt from '@/Components/PWAInstallPrompt.vue';
+import { useThemeSettings } from "@/Composables/useThemeSettings.js";
 
 // Referensi ke komponen PWAInstallPrompt
 const pwaPromptRef = ref(null);
@@ -92,8 +93,17 @@ const logout = () => {
         pwaPromptRef.value.resetPWAPromptStatus();
     }
     
-    // Submit form logout
-    document.getElementById('logout-form').submit();
+    // Gunakan router Inertia untuk logout daripada menggunakan form submission
+    router.post(route('logout'), {}, {
+        onSuccess: () => {
+            // Redirect ke halaman beranda setelah logout sukses
+            window.location.href = '/';
+        },
+        onError: () => {
+            // Fallback jika terjadi error, langsung redirect ke home
+            window.location.href = '/';
+        }
+    });
 };
 
 // Computed untuk mengecek role admin
