@@ -15,34 +15,12 @@ const urlsToCache = [
 
 // Install service worker dan cache aset utama
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Cache dibuka');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
-  );
+  self.skipWaiting();
 });
 
 // Aktivasi service worker dan membersihkan cache lama
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => {
-          return name !== CACHE_NAME;
-        }).map((name) => {
-          console.log('Menghapus cache lama:', name);
-          return caches.delete(name);
-        })
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
-  );
+  event.waitUntil(clients.claim());
 });
 
 // Strategi cache untuk fetch requests
@@ -100,3 +78,6 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Service worker ini hanya placeholder
+// Vite PWA Plugin akan menggenerasi service worker yang sebenarnya

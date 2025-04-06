@@ -20,6 +20,9 @@ const route = (...args) => {
     return window.route(...args);
 };
 
+// Gunakan theme settings composable
+const { isDarkMode, toggleDarkMode } = useThemeSettings();
+
 const isSidebarOpen = ref(false);
 const isProfileMenuOpen = ref(false);
 const showingNavigationDropdown = ref(false);
@@ -46,42 +49,7 @@ const auth = computed(() => props.auth || page.props.auth);
 // Computed untuk user yang sudah terautentikasi
 const authenticatedUser = computed(() => auth.value?.user);
 
-// Dark Mode State
-const isDark = ref(false);
-
-// Fungsi untuk mengupdate tema
-const updateTheme = (dark) => {
-    if (dark) {
-        document.documentElement.classList.add('dark');
-        document.documentElement.style.colorScheme = 'dark';
-        localStorage.theme = 'dark';
-    } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.style.colorScheme = 'light';
-        localStorage.theme = 'light';
-    }
-};
-
-// Watch perubahan isDark
-watch(isDark, (newValue) => {
-    updateTheme(newValue);
-});
-
 onMounted(() => {
-    // Check sistem preferensi dan localStorage
-    const darkMode = localStorage.theme === 'dark' || 
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    isDark.value = darkMode;
-    updateTheme(darkMode);
-
-    // Listen untuk perubahan preferensi sistem
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.theme) { // Hanya update jika user belum set preferensi
-            isDark.value = e.matches;
-        }
-    });
-
     console.log('Auth Data:', auth.value);
     console.log('User Data:', auth.value?.user);
     console.log('User Roles:', auth.value?.user?.roles);
@@ -128,10 +96,6 @@ const isAdmin = computed(() => {
 const userData = computed(() => {
     return auth.value?.user;
 });
-
-const toggleDarkMode = () => {
-    isDark.value = !isDark.value;
-};
 
 // Computed untuk title dan logo dari settings yang diberikan
 const websiteSettings = computed(() => ({
@@ -205,14 +169,14 @@ defineExpose({ hasPermission });
                         class="w-full flex items-center px-2 py-2 text-sm text-light-text dark:text-dark-text rounded-lg hover:bg-light-card dark:hover:bg-dark-card transition-colors"
                     >
                         <div class="p-1.5 rounded-lg bg-light-card dark:bg-dark-card">
-                            <svg v-if="!isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                             <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                             </svg>
                         </div>
-                        <span class="ml-3">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</span>
+                        <span class="ml-3">{{ isDarkMode ? 'Dark Mode' : 'Light Mode' }}</span>
                     </button>
 
                     <!-- User Profile -->
