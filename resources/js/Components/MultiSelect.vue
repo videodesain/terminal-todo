@@ -37,10 +37,11 @@
             </div>
         </div>
 
-        <!-- Dropdown -->
+        <!-- Dropdown/Dropup -->
         <div
             v-show="isOpen"
-            class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto"
+            class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto"
+            :class="isDropUp ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
             <div
                 v-for="option in filteredOptions"
@@ -94,6 +95,10 @@ const props = defineProps({
     multiple: {
         type: Boolean,
         default: true
+    },
+    dropUp: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -101,6 +106,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const isOpen = ref(false);
 const searchQuery = ref('');
+const isDropUp = computed(() => props.dropUp);
 
 // Computed properties
 const selectedItems = computed(() => {

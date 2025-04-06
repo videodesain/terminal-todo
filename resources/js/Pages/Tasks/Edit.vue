@@ -161,6 +161,7 @@
                                         label: u.name
                                     }))"
                                     multiple
+                                    :dropUp="true"
                                 />
                                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                     Klik untuk memilih atau menghapus assignee

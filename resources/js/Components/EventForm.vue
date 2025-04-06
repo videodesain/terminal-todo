@@ -131,6 +131,7 @@
                     label: u.name
                 }))"
                 multiple
+                :dropUp="true"
             />
             <InputError class="mt-2" :message="form.errors.assignees" />
         </div>
