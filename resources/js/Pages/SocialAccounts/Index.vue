@@ -125,7 +125,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="inline-flex rounded-md">
                                             <Link
-                                                :href="route('metric-data.show', account.id)"
+                                                :href="route('metric-data.index', { account_id: account.id })"
                                                 class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium rounded-l-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                                             >
                                                 <ChartBarIcon class="w-4 h-4 mr-1" />

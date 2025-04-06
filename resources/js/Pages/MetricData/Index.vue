@@ -375,6 +375,10 @@ const props = defineProps({
         type: Object,
         required: true
     },
+    filters: {
+        type: Object,
+        default: () => ({})
+    },
     auth: {
         type: Object,
         required: true
@@ -382,10 +386,10 @@ const props = defineProps({
 })
 
 const filters = ref({
-    account_id: '',
-    date_range: '30',
-    start_date: '',
-    end_date: ''
+    account_id: props.filters.account_id || '',
+    date_range: props.filters.date_range || '30',
+    start_date: props.filters.start_date || '',
+    end_date: props.filters.end_date || ''
 })
 
 // Stats

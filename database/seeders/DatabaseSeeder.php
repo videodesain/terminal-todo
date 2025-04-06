@@ -37,14 +37,14 @@ class DatabaseSeeder extends Seeder
             $this->call(TaskSeeder::class);
             $this->call(CalendarSeeder::class);
             
-            // 6. Data metrics dan metrics data
-            $this->call(MetricSeeder::class);
+            // // 6. Data metrics dan metrics data
+            // $this->call(MetricSeeder::class);
             
-            // 7. SocialAccountSeeder sudah bisa dijalankan karena foreign key sudah diperbaiki
-            $this->call(SocialAccountSeeder::class);
+            // // 7. SocialAccountSeeder sudah bisa dijalankan karena foreign key sudah diperbaiki
+            // $this->call(SocialAccountSeeder::class);
             
-            // 8. MetricDataSeeder tetap bisa dijalankan
-            $this->call(MetricDataSeeder::class);
+            // // 8. MetricDataSeeder tetap bisa dijalankan
+            // $this->call(MetricDataSeeder::class);
             
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
             
