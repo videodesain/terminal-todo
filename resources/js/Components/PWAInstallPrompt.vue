@@ -22,19 +22,15 @@
 
       <!-- Body -->
       <div class="px-6 py-5">
-        <div class="flex items-start mb-4">
+        <div class="flex items-center">
           <div class="flex-shrink-0 mt-1">
-            <img src="/icons/pwa-192x192.png" :alt="`${appName} Logo`" class="w-14 h-14 rounded-lg">
+            <img src="/icons/pwa-192x192.png" :alt="`${appName} Logo`" class="w-10 h-10 rounded-lg">
           </div>
           <div class="ml-4">
-            <p class="text-gray-800 dark:text-gray-200 mb-2">
+            <p class="text-gray-800 dark:text-gray-200">
               Instal <strong>{{ appName }}</strong> ke perangkat Anda untuk:
             </p>
-            <ul class="list-disc pl-5 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-              <li>Akses lebih cepat dari layar utama</li>
-              <li>Bekerja lebih baik saat offline</li>
-              <li>Pengalaman seperti aplikasi native</li>
-            </ul>
+           
           </div>
         </div>
       </div>
@@ -42,7 +38,7 @@
       <!-- Footer dengan tombol aksi -->
       <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between">
         <div>
-          <button @click="remindLater" class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm">
+          <button @click="remindLater" class="text-gray-600 py-1.5 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 text-sm">
             Nanti Saja
           </button>
         </div>
@@ -60,13 +56,61 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
 const showInstallPrompt = ref(false);
 const deferredPrompt = ref(null);
+const isStandalone = ref(false);
+const isDesktop = ref(false);
+const isChrome = ref(false);
+const isEdge = ref(false);
+const isFirefox = ref(false);
+const isSafari = ref(false);
 
 // Get app name from environment variable
 const appName = ref(import.meta.env.VITE_APP_NAME || 'Terminal Todo');
+
+// Deteksi platform dan browser
+const detectPlatformAndBrowser = () => {
+  const ua = navigator.userAgent;
+  
+  // Deteksi platform
+  isDesktop.value = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua));
+  
+  // Deteksi browser
+  isChrome.value = /Chrome/.test(ua) && !/Edge|Edg/.test(ua);
+  isEdge.value = /Edge|Edg/.test(ua);
+  isFirefox.value = /Firefox/.test(ua);
+  isSafari.value = /Safari/.test(ua) && !/Chrome/.test(ua);
+  
+  // Deteksi mode standalone
+  isStandalone.value = 
+    window.matchMedia('(display-mode: standalone)').matches || 
+    window.navigator.standalone || 
+    document.referrer.includes('android-app://');
+  
+  console.log('Platform detection:', {
+    isDesktop: isDesktop.value,
+    isChrome: isChrome.value,
+    isEdge: isEdge.value,
+    isFirefox: isFirefox.value,
+    isSafari: isSafari.value,
+    isStandalone: isStandalone.value
+  });
+};
+
+// Cek apakah aplikasi dapat diinstal di browser saat ini
+const isInstallable = computed(() => {
+  // Mobile devices
+  if (!isDesktop.value) return true;
+  
+  // Desktop - restrict to supported browsers
+  if (isDesktop.value) {
+    return isChrome.value || isEdge.value || isFirefox.value;
+  }
+  
+  return false;
+});
 
 // Cek status PWA berdasarkan localStorage
 const isPWAInstallPromptClosed = () => {
@@ -81,20 +125,60 @@ const isPWAInstallPromptDelayed = () => {
   return parseInt(delayedUntil) > new Date().getTime();
 };
 
+// Tampilkan prompt dengan delay untuk menghindari masalah timing
+const showPromptWithDelay = (delay = 2000) => {
+  if (isStandalone.value) {
+    console.log('App already installed as standalone, not showing prompt');
+    return;
+  }
+  
+  if (!isInstallable.value) {
+    console.log('Browser tidak mendukung PWA installation');
+    return;
+  }
+  
+  if (isPWAInstallPromptClosed() || isPWAInstallPromptDelayed()) {
+    console.log('User closed or delayed prompt before');
+    return;
+  }
+  
+  setTimeout(() => {
+    showInstallPrompt.value = true;
+    console.log('Showing install prompt');
+  }, delay);
+};
+
 // Handler untuk event beforeinstallprompt
 const beforeInstallPromptHandler = (e) => {
   // Cegah Chrome menampilkan prompt instalasi otomatis
   e.preventDefault();
   
+  console.log('beforeinstallprompt event fired!');
+  
   // Simpan event untuk dipicu nanti
   deferredPrompt.value = e;
   
-  // Tampilkan pop-up jika belum pernah ditutup dan tidak ditunda
-  if (!isPWAInstallPromptClosed() && !isPWAInstallPromptDelayed()) {
-    // Tunda beberapa detik agar tidak langsung muncul saat load
-    setTimeout(() => {
-      showInstallPrompt.value = true;
-    }, 2000);
+  showPromptWithDelay();
+};
+
+// Manual trigger untuk platform yang tidak mendukung beforeinstallprompt
+const checkInstallationEligibility = () => {
+  // Jika browser tidak mendukung PWA atau sudah diinstal, tidak perlu tampilkan prompt
+  if (isStandalone.value || !isInstallable.value) {
+    return;
+  }
+  
+  // Jika tidak ada deferredPrompt (Safari/iOS atau some Firefox)
+  if (!deferredPrompt.value) {
+    // Untuk Safari di iOS/MacOS, tampilkan instruksi manual
+    if (isSafari.value) {
+      showPromptWithDelay(3000);
+    }
+    
+    // Deteksi Firefox di desktop
+    if (isFirefox.value && isDesktop.value) {
+      showPromptWithDelay(3000);
+    }
   }
 };
 
@@ -130,27 +214,52 @@ const closePromptUntilLogout = () => {
 
 // Instal PWA
 const installPWA = async () => {
-  if (!deferredPrompt.value) {
-    return;
-  }
-  
-  // Tampilkan prompt instalasi native
-  deferredPrompt.value.prompt();
-  
-  // Tunggu pengguna merespons prompt
-  const { outcome } = await deferredPrompt.value.userChoice;
-  console.log(`Hasil prompt instalasi: ${outcome}`);
-  
-  // Jika berhasil diinstal
-  if (outcome === 'accepted') {
-    // Tambahkan pesan toast jika tersedia
+  if (deferredPrompt.value) {
+    // Chrome dan browser berbasis Chrome - gunakan prompt API
+    try {
+      // Tampilkan prompt instalasi native
+      deferredPrompt.value.prompt();
+      
+      // Tunggu pengguna merespons prompt
+      const { outcome } = await deferredPrompt.value.userChoice;
+      console.log(`Hasil prompt instalasi: ${outcome}`);
+      
+      // Jika berhasil diinstal
+      if (outcome === 'accepted') {
+        // Tambahkan pesan toast jika tersedia
+        if (window.$toast) {
+          window.$toast.success('Terima kasih! Aplikasi sedang diinstal');
+        }
+      }
+      
+      // Bersihkan deferredPrompt
+      deferredPrompt.value = null;
+    } catch (error) {
+      console.error('Error saat menginstal PWA:', error);
+    }
+  } else if (isSafari.value) {
+    // Safari - tampilkan instruksi manual
+    const message = isDesktop.value ? 
+      'Untuk menginstal, klik "Share" di toolbar browser lalu pilih "Add to Home Screen"' :
+      'Ketuk icon Share/Bagikan di browser, lalu pilih "Add to Home Screen"';
+    
     if (window.$toast) {
-      window.$toast.success('Terima kasih! Aplikasi sedang diinstal');
+      window.$toast.info(message, { duration: 8000 });
+    } else {
+      alert(message);
+    }
+  } else if (isFirefox.value) {
+    // Firefox - tampilkan instruksi khusus
+    const message = isDesktop.value ? 
+      'Klik icon menu (3 garis) di kanan atas, lalu pilih "Install Site to Applications"' :
+      'Ketuk menu (3 titik) lalu pilih "Install"';
+    
+    if (window.$toast) {
+      window.$toast.info(message, { duration: 8000 });
+    } else {
+      alert(message);
     }
   }
-  
-  // Bersihkan deferredPrompt
-  deferredPrompt.value = null;
   
   // Sembunyikan pop-up
   showInstallPrompt.value = false;
@@ -163,12 +272,16 @@ const resetPWAPromptStatus = () => {
 };
 
 onMounted(() => {
+  // Deteksi platform dan browser
+  detectPlatformAndBrowser();
+  
   // Tambahkan listener untuk beforeinstallprompt
   window.addEventListener('beforeinstallprompt', beforeInstallPromptHandler);
   
   // Periksa apakah PWA sudah terinstal
   window.addEventListener('appinstalled', () => {
     console.log('PWA berhasil diinstal');
+    isStandalone.value = true;
     showInstallPrompt.value = false;
     
     // Tambahkan pesan toast jika tersedia
@@ -176,10 +289,31 @@ onMounted(() => {
       window.$toast.success('Aplikasi berhasil diinstal!');
     }
   });
+  
+  // Untuk browser yang tidak mendukung beforeinstallprompt
+  // Periksa eligibility setelah page load
+  nextTick(() => {
+    setTimeout(() => {
+      checkInstallationEligibility();
+    }, 3000);
+  });
+  
+  // Listen untuk perubahan display mode (jika PWA sudah diinstal)
+  const mediaQuery = window.matchMedia('(display-mode: standalone)');
+  mediaQuery.addEventListener('change', (e) => {
+    isStandalone.value = e.matches;
+    if (isStandalone.value) {
+      showInstallPrompt.value = false;
+    }
+  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('beforeinstallprompt', beforeInstallPromptHandler);
+  
+  // Cleanup media query listener
+  const mediaQuery = window.matchMedia('(display-mode: standalone)');
+  mediaQuery.removeEventListener('change', () => {});
 });
 
 // Ekspos fungsi resetPWAPromptStatus agar dapat diimpor dari komponen lain
