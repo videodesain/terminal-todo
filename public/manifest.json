@@ -1,6 +1,6 @@
 {
-  "name": "Terminal Todo",
-  "short_name": "TerminalTodo",
+  "name": "CreativeApp",
+  "short_name": "CreativeApp",
   "description": "Aplikasi Todo List dengan tampilan terminal",
   "start_url": "/",
   "display": "standalone",
