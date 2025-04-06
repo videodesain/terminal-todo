@@ -46,8 +46,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'robots.txt'],
             manifest: {
-                name: process.env.APP_NAME || 'Terminal Todo',
-                short_name: 'Terminal',
+                name: process.env.VITE_APP_NAME || 'Terminal Todo',
+                short_name: process.env.VITE_APP_SHORT_NAME || 'Terminal',
                 description: 'Aplikasi pengelolaan sosial media dan todo list',
                 theme_color: '#4F46E5',
                 background_color: '#121212',
