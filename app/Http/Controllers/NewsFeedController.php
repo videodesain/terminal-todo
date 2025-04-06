@@ -38,8 +38,9 @@ class NewsFeedController extends Controller
         $feeds = NewsFeed::with(['user' => function($query) {
             $query->select('id', 'name', 'profile_photo_path');
         }])
+        ->where('is_active', true)
         ->latest()
-        ->paginate(9);
+        ->paginate(20);
 
         return Inertia::render('NewsFeed/Index', [
             'feeds' => $feeds
@@ -428,14 +429,16 @@ class NewsFeedController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(NewsFeed $newsFeed)
+    public function destroy($id)
     {
-        $this->authorize('delete', $newsFeed);
+        $feed = NewsFeed::findOrFail($id);
+        $this->authorize('delete', $feed);
 
-        $newsFeed->delete();
+        // Update status menjadi tidak aktif sebagai pengganti soft delete
+        $feed->update(['is_active' => false]);
 
         return redirect()->route('news-feeds.index')
-            ->with('message', 'Feed berhasil dihapus!');
+            ->with('message', 'Feed berhasil dihapus.');
     }
 
     public function preview(Request $request)

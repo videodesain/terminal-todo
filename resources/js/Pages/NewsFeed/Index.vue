@@ -312,7 +312,27 @@
           </div>
         </div>
 
-        <Pagination :links="feeds.links" class="mt-6" />
+        <!-- Tampilkan "Tidak ada data" jika tidak ada feed yang ditemukan -->
+        <div v-if="Object.keys(groupedFeeds).length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center mt-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Tidak ada data yang ditemukan</h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            {{ selectedType !== 'all' || selectedPeriod !== 'all' 
+              ? 'Coba ubah filter atau periode untuk melihat lebih banyak feed.' 
+              : 'Belum ada feed yang ditambahkan.' }}
+          </p>
+          <Link
+            :href="route('news-feeds.create')"
+            class="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
+          >
+            Tambah Feed Baru
+          </Link>
+        </div>
+
+        <!-- Pagination hanya ditampilkan jika ada data -->
+        <Pagination v-if="feeds.links && feeds.links.length > 3" :links="feeds.links" class="mt-6" />
       </div>
     </div>
   </AuthenticatedLayout>
@@ -328,27 +348,38 @@ const props = defineProps({
   feeds: Object
 })
 
+// Logging untuk debugging jumlah data
+console.log('Total feeds dari server:', props.feeds.data.length);
+console.log('Total feeds di pagination:', props.feeds.total);
+console.log('Pagination links:', props.feeds.links);
+
 const selectedType = ref('all')
-const selectedPeriod = ref('week')
+const selectedPeriod = ref('all')
 const startDate = ref('')
 const endDate = ref('')
 
 // Filter feeds berdasarkan tipe dan periode yang dipilih
 const filteredFeeds = computed(() => {
-  let filtered = props.feeds.data
+  console.log('Filtering feeds. Data awal:', props.feeds.data.length);
+  
+  let filtered = [...props.feeds.data]; // Gunakan spread operator untuk membuat copy baru
+  console.log('Data setelah copy:', filtered.length);
 
   // Filter berdasarkan tipe
   if (selectedType.value !== 'all') {
+    console.log('Filtering by type:', selectedType.value);
     if (selectedType.value === 'social_media') {
       // Khusus untuk filter social_media
       filtered = filtered.filter(feed => feed.type === 'social_media')
     } else {
       filtered = filtered.filter(feed => feed.type === selectedType.value)
     }
+    console.log('Data setelah filter tipe:', filtered.length);
   }
 
   // Filter berdasarkan periode
   if (selectedPeriod.value !== 'all') {
+    console.log('Filtering by period:', selectedPeriod.value);
     const now = new Date()
     filtered = filtered.filter(feed => {
       const feedDate = new Date(feed.created_at)
@@ -357,7 +388,8 @@ const filteredFeeds = computed(() => {
         case 'today':
           return feedDate.toDateString() === now.toDateString()
         case 'week':
-          const weekStart = new Date(now.setDate(now.getDate() - now.getDay()))
+          const weekStart = new Date();
+          weekStart.setDate(now.getDate() - 7); // 7 hari terakhir, bukan sejak awal minggu
           return feedDate >= weekStart
         case 'month':
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -367,15 +399,28 @@ const filteredFeeds = computed(() => {
           return feedDate >= yearStart
         case 'custom':
           if (!startDate.value || !endDate.value) return true
-          return feedDate >= new Date(startDate.value) && feedDate <= new Date(endDate.value)
+          const start = new Date(startDate.value);
+          const end = new Date(endDate.value);
+          end.setHours(23, 59, 59, 999); // Set ke akhir hari
+          return feedDate >= start && feedDate <= end
         default:
           return true
       }
     })
+    console.log('Data setelah filter periode:', filtered.length);
   }
 
   return filtered
 })
+
+// Logging setiap kali filter berubah
+watch([selectedType, selectedPeriod, startDate, endDate], (newValues, oldValues) => {
+  console.log('Filter berubah:', { 
+    type: newValues[0], 
+    period: newValues[1], 
+    filteredCount: filteredFeeds.value.length 
+  });
+});
 
 // Kelompokkan feeds berdasarkan bulan
 const groupedFeeds = computed(() => {

@@ -470,11 +470,11 @@ const submit = () => {
   if (form.type === 'image') {
     form.post(route('news-feeds.store'), {
       forceFormData: true,
-      preserveScroll: true,
-      preserveState: true,
+      preserveScroll: false,
+      preserveState: false,
       onSuccess: () => {
-        form.reset()
-        imagePreview.value = null
+        // Force reload untuk menghindari masalah cache
+        window.location.href = route('news-feeds.index');
       },
       onError: (errors) => {
         console.error('Upload errors:', errors)
@@ -485,11 +485,11 @@ const submit = () => {
     })
   } else {
     form.post(route('news-feeds.store'), {
-      preserveScroll: true,
-      preserveState: true,
+      preserveScroll: false,
+      preserveState: false,
       onSuccess: () => {
-        form.reset()
-        preview.value = null
+        // Force reload untuk menghindari masalah cache
+        window.location.href = route('news-feeds.index');
       },
       onError: (errors) => {
         console.error('Submit errors:', errors)

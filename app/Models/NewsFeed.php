@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Embed\Embed;
 use Illuminate\Support\Facades\Storage;
 use GuzzleHttp\Client;
@@ -13,7 +12,7 @@ use App\Services\SocialMediaService;
 
 class NewsFeed extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     const TYPE_NEWS = 'news';
     const TYPE_VIDEO = 'video';
