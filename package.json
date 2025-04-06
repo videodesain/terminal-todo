@@ -3,11 +3,12 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "vite build && node scripts/ensure-manifest.js",
         "preview": "vite preview",
         "prod": "npm run build && php artisan optimize",
         "generate-icons": "node scripts/generate-pwa-icons.cjs",
-        "terminal-todo": "php artisan serve --port=8000"
+        "terminal-todo": "php artisan serve --port=8000",
+        "deploy": "npm run build && php artisan optimize"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.3",

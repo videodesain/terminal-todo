@@ -40,7 +40,77 @@
     @endif
 
     @routes(['verify' => true])
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Vite Assets with Fallback -->
+    @php
+    $manifestPath = public_path('build/manifest.json');
+    $altManifestPath = public_path('build/.vite/manifest.json');
+    
+    // Cek keberadaan manifest.json
+    $hasManifest = file_exists($manifestPath);
+    $hasAltManifest = file_exists($altManifestPath);
+    
+    // Jika manifest tidak ada di tempat standar tetapi ada di .vite folder, salin ke lokasi standar
+    if (!$hasManifest && $hasAltManifest) {
+        try {
+            if (!is_dir(dirname($manifestPath))) {
+                mkdir(dirname($manifestPath), 0755, true);
+            }
+            copy($altManifestPath, $manifestPath);
+            $hasManifest = true;
+        } catch (\Exception $e) {
+            // Log error
+            \Log::error('Gagal menyalin manifest: ' . $e->getMessage());
+        }
+    }
+    
+    // Cek apakah build berhasil dengan mencari file CSS dan JS
+    $cssExists = !empty(glob(public_path('build') . '/*.css'));
+    $jsExists = !empty(glob(public_path('build') . '/*.js'));
+    $buildExists = $hasManifest || ($cssExists && $jsExists);
+    @endphp
+
+    @if ($buildExists)
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        @php
+        // Cari file CSS & JS terbaru sebagai fallback
+        $cssFiles = glob(public_path('build') . '/*.css');
+        $jsFiles = glob(public_path('build') . '/*.js');
+        
+        $cssFile = '';
+        $jsFile = '';
+        
+        // Dapatkan file terbaru berdasarkan waktu modifikasi
+        if (!empty($cssFiles)) {
+            usort($cssFiles, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+            $cssFile = basename($cssFiles[0]);
+        }
+        
+        if (!empty($jsFiles)) {
+            usort($jsFiles, function($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+            // Filter hanya file JS yang bukan workbox
+            foreach ($jsFiles as $file) {
+                if (strpos(basename($file), 'workbox-') === false) {
+                    $jsFile = basename($file);
+                    break;
+                }
+            }
+        }
+        @endphp
+        
+        @if($cssFile)
+            <link rel="stylesheet" href="{{ asset('build/' . $cssFile) }}">
+        @endif
+        @if($jsFile)
+            <script type="module" src="{{ asset('build/' . $jsFile) }}"></script>
+        @endif
+    @endif
+    
     @inertiaHead
 </head>
 <body class="font-sans antialiased h-full bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text">

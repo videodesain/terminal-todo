@@ -3,6 +3,28 @@ import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import fs from 'fs';
+
+// Helper untuk memastikan manifest.json selalu tersedia setelah build
+function copyManifest() {
+    return {
+        name: 'copy-manifest',
+        closeBundle: async () => {
+            const srcPath = 'public/build/.vite/manifest.json';
+            const destPath = 'public/build/manifest.json';
+            
+            try {
+                if (fs.existsSync(srcPath)) {
+                    const data = await fs.promises.readFile(srcPath, 'utf8');
+                    await fs.promises.writeFile(destPath, data);
+                    console.log('✓ Manifest disalin otomatis oleh plugin Vite');
+                }
+            } catch (err) {
+                console.error('Error saat menyalin manifest:', err);
+            }
+        },
+    };
+}
 
 export default defineConfig({
     plugins: [
@@ -102,6 +124,7 @@ export default defineConfig({
                 type: 'module',
             },
         }),
+        copyManifest(),
     ],
     build: {
         outDir: 'public/build',
@@ -111,7 +134,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.js']
         },
         emptyOutDir: true,
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
     },
     resolve: {
         alias: {

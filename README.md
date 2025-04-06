@@ -246,6 +246,44 @@ Untuk monitoring performa aplikasi, gunakan tool seperti:
 - Protect against XSS dan CSRF attacks dengan middleware
 - Log semua aktivitas keamanan
 
+================
+
+Untuk menjalankan `./scripts/deploy.sh` di lingkungan produksi, ikuti langkah-langkah berikut:
+
+1. Pastikan script memiliki izin eksekusi:
+```bash
+chmod +x scripts/deploy.sh
+```
+
+2. Jalankan script dari direktori root project:
+```bash
+cd /path/to/aplikasi
+./scripts/deploy.sh
+```
+
+Jika Anda menggunakan sistem deployment seperti Forge, Envoyer, atau menjalankan dari jarak jauh via SSH:
+
+```bash
+ssh user@server "cd /path/to/aplikasi && ./scripts/deploy.sh"
+```
+
+Untuk server dengan pembatasan akses:
+
+1. Login ke server via SSH
+2. Navigasi ke direktori project
+3. Jalankan script:
+```bash
+cd /path/to/aplikasi
+sudo ./scripts/deploy.sh
+```
+
+Pastikan server memiliki semua dependensi yang diperlukan (PHP 8.2+, Node.js, npm, dan composer). Jika mengalami masalah izin, tambahkan perintah `sudo` di depan jika diperlukan.
+
+Periksa log terminal untuk memastikan tidak ada error dalam proses deployment.
+
+
+================
+
 ## License
 
 The Terminal Todo is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
@@ -314,3 +352,53 @@ Untuk menambahkan platform baru:
 2. Implementasikan logika spesifik untuk platform tersebut
 3. Tambahkan kondisi deteksi ke `EmbedManager.vue`
 4. Daftarkan komponen baru di `EmbedManager.vue`
+
+## Deployment ke Produksi
+
+Untuk men-deploy aplikasi ke server produksi dengan benar, ikuti langkah-langkah berikut:
+
+1. Gunakan script deploy yang disediakan:
+
+```bash
+./scripts/deploy.sh
+```
+
+Script ini akan:
+- Menginstal dependensi PHP dan Node.js
+- Membangun aset frontend
+- Memastikan `manifest.json` berada di lokasi yang benar
+- Mengoptimalkan Laravel untuk produksi
+
+2. Alternatif, jika Anda ingin melakukannya manual:
+
+```bash
+# Install dependencies
+composer install --no-dev --optimize-autoloader
+npm ci
+
+# Build frontend
+npm run build
+
+# Pastikan manifest.json ada di lokasi yang benar
+node scripts/ensure-manifest.js
+
+# Optimize Laravel
+php artisan optimize
+```
+
+### Troubleshooting
+
+Jika Anda melihat error:
+```
+Vite manifest not found at: /path/to/public/build/manifest.json
+```
+
+Coba solusi berikut:
+1. Bersihkan cache Vite: `rm -rf public/build`
+2. Rebuild frontend: `npm run build`
+3. Pastikan manifest.json ada: `node scripts/ensure-manifest.js`
+4. Jika masih bermasalah, salin manifest secara manual:
+   ```bash
+   cp public/build/.vite/manifest.json public/build/
+   ```
+5. Bersihkan cache Laravel: `php artisan cache:clear`
