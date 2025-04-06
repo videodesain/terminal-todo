@@ -1,36 +1,4 @@
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-
 # Terminal Todo
 
 Aplikasi manajemen tugas untuk tim dengan fokus pada editorial calendar dan social media management.
@@ -360,7 +328,6 @@ Untuk men-deploy aplikasi ke server produksi dengan benar, ikuti langkah-langkah
 1. Gunakan script deploy yang disediakan:
 
 ```bash
-cd /path/to/aplikasi
 ./scripts/deploy.sh
 ```
 
@@ -387,6 +354,54 @@ node scripts/ensure-manifest.js
 php artisan optimize
 ```
 
+### Update Produksi (Zero Downtime)
+
+Ketika Anda perlu mengupdate aplikasi di produksi dengan gangguan minimal:
+
+#### 1. Update Inkremental (Hanya File yang Berubah)
+
+Gunakan script update produksi untuk mengupdate aplikasi dengan gangguan minimal, hanya memproses file yang berubah:
+
+```bash
+# Di server produksi
+cd /path/to/aplikasi
+./scripts/production-update.sh
+```
+
+Script ini akan:
+- Melakukan git pull dari repository
+- Mendeteksi file-file yang berubah
+- Hanya mengupdate dependensi jika diperlukan
+- Hanya membangun ulang frontend jika diperlukan
+- Hanya menjalankan migrasi jika ada perubahan pada migrasi
+
+#### 2. Deployment Penuh
+
+Untuk deployment pertama kali atau deployment ulang penuh:
+
+```bash
+# Di server produksi
+./scripts/production-deploy.sh <repository_url> [branch] [target_directory]
+```
+
+Contoh:
+```bash
+./scripts/production-deploy.sh git@github.com:username/terminal-todo.git main /var/www/html
+```
+
+#### 3. Rollback
+
+Jika terjadi masalah setelah update, Anda dapat melakukan rollback ke versi sebelumnya:
+
+```bash
+# Rollback ke commit terakhir
+cd /path/to/aplikasi
+./scripts/production-rollback.sh
+
+# Atau rollback ke commit spesifik
+./scripts/production-rollback.sh a1b2c3d4e5f6
+```
+
 ### Troubleshooting
 
 Jika Anda melihat error:
@@ -394,41 +409,8 @@ Jika Anda melihat error:
 Vite manifest not found at: /path/to/public/build/manifest.json
 ```
 
-#### Metode 1: Gunakan script perbaikan otomatis
-```bash
-# Di server produksi
-cd /path/to/aplikasi
-node scripts/manual-manifest-fix.js
-php artisan cache:clear
-```
-
-#### Metode 2: Lakukan perbaikan manual
-```bash
-# 1. Bersihkan cache Vite
-rm -rf public/build/.vite/manifest.json
-
-# 2. Rebuild frontend 
-npm run build
-
-# 3. Jika masih bermasalah, salin manifest secara manual
-mkdir -p public/build
-cp public/build/.vite/manifest.json public/build/
-
-# 4. Set izin file yang benar
-chmod 644 public/build/manifest.json
-
-# 5. Bersihkan cache Laravel
-php artisan cache:clear
-```
-
-#### Troubleshooting Error ESM
-Jika mendapat error "require is not defined in ES module scope", pastikan file JS menggunakan sintaks ES modules:
-
-```bash
-# Contoh: Ubah CommonJS ke ESM
-# Ganti `const fs = require('fs')` dengan `import fs from 'fs'`
-
-# Atau jalankan script dengan ekstensi .cjs
-mv scripts/ensure-manifest.js scripts/ensure-manifest.cjs
-node scripts/ensure-manifest.cjs
-```
+Coba solusi berikut:
+1. Bersihkan cache Vite: `rm -rf public/build/.vite/manifest.json`
+2. Rebuild frontend: `npm run build`
+3. Pastikan manifest.json ada: `node scripts/ensure-manifest.js`
+4. Bersihkan cache Laravel: `php artisan cache:clear`
